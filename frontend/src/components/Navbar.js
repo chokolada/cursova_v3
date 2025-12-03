@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import '../styles/Navbar.css';
 
 const Navbar = () => {
-  const { user, logout, isAuthenticated, isManager } = useAuth();
+  const { user, logout, isAuthenticated, isManager, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -36,13 +36,13 @@ const Navbar = () => {
 
           {isManager() && (
             <li className="navbar-item">
-              <Link to="/admin" className="navbar-link">
+              <Link to="/react-admin" className="navbar-link">
                 Admin Panel
               </Link>
             </li>
           )}
 
-          {isAuthenticated() ? (
+          {loading ? null : isAuthenticated() ? (
             <>
               <li className="navbar-item">
                 <span className="navbar-user">

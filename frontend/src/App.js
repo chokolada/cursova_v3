@@ -39,7 +39,7 @@ function App() {
                 }
               />
               <Route
-                path="/admin"
+                path="/react-admin"
                 element={
                   <ProtectedRoute requireManager={true}>
                     <AdminPanel />
