@@ -1,12 +1,12 @@
 # Hotel Management Backend
 
-Backend API для системи управління готелем, побудований на FastAPI з PostgreSQL.
+Backend API для системи управління готелем, побудований на FastAPI з SQLite.
 
 ## Технології
 
 - Python 3.11+
 - FastAPI - веб-фреймворк
-- PostgreSQL - база даних
+- SQLite - легка файлова база даних (не потребує окремого сервера)
 - SQLAlchemy - ORM
 - Alembic - міграції БД
 - JWT - авторизація
@@ -28,17 +28,7 @@ cd backend
 poetry install
 ```
 
-### 3. Налаштуйте PostgreSQL
-
-Створіть базу даних PostgreSQL:
-
-```sql
-CREATE DATABASE hotel_db;
-CREATE USER hotel_user WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE hotel_db TO hotel_user;
-```
-
-### 4. Налаштуйте змінні середовища
+### 3. Налаштуйте змінні середовища
 
 Скопіюйте `.env.example` в `.env` та заповніть своїми даними:
 
@@ -49,21 +39,25 @@ cp .env.example .env
 Приклад `.env`:
 
 ```env
-DATABASE_URL=postgresql+asyncpg://hotel_user:your_password@localhost:5432/hotel_db
+DATABASE_URL=sqlite+aiosqlite:///./hotel.db
 SECRET_KEY=your-very-secret-key-change-in-production
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
-### 5. Запустіть міграції
+**Примітка:** База даних SQLite створюється автоматично як файл `hotel.db` в корені папки backend при першому запуску міграцій.
+
+### 4. Запустіть міграції
 
 ```bash
 poetry run alembic upgrade head
 ```
 
-### 6. Створіть початкового адміністратора (опціонально)
+Це створить файл `hotel.db` з усіма необхідними таблицями.
 
-Ви можете створити користувача через API або вручну через PostgreSQL:
+### 5. Створіть початкового адміністратора (опціонально)
+
+Ви можете створити користувача через API або вручну через SQLite:
 
 ```sql
 INSERT INTO users (email, username, hashed_password, role, is_active)
@@ -187,13 +181,30 @@ poetry run pytest
 
 ### Помилка підключення до бази даних
 
-Переконайтеся, що PostgreSQL запущений та DATABASE_URL правильно налаштований в `.env`.
+Переконайтеся, що DATABASE_URL правильно налаштований в `.env`:
+```env
+DATABASE_URL=sqlite+aiosqlite:///./hotel.db
+```
+
+База даних SQLite створюється автоматично, тому проблеми з підключенням зустрічаються рідко.
 
 ### Помилка при міграціях
 
-Переконайтеся, що база даних існує та у користувача є відповідні права.
+Переконайтеся, що у вас є права на запис файлів в папці backend.
 
 ```bash
 poetry run alembic current  # Перевірити поточну версію
 poetry run alembic history  # Показати історію міграцій
+```
+
+### Видалення бази даних
+
+Якщо потрібно почати з чистої бази:
+
+```bash
+# Видаліть файл бази даних
+rm hotel.db
+
+# Створіть нову базу з міграціями
+poetry run alembic upgrade head
 ```

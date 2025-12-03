@@ -6,21 +6,11 @@
 
 - Python 3.11+
 - Node.js 16+
-- PostgreSQL 14+
 - Poetry
 
-### Крок 1: Налаштування бази даних
+**Примітка:** PostgreSQL не потрібен! Проект використовує SQLite - легку файлову базу даних.
 
-1. Встановіть PostgreSQL
-2. Створіть базу даних:
-
-```sql
-CREATE DATABASE hotel_db;
-CREATE USER hotel_user WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE hotel_db TO hotel_user;
-```
-
-### Крок 2: Налаштування Backend
+### Крок 1: Налаштування Backend
 
 ```bash
 # Перейдіть в папку backend
@@ -36,10 +26,10 @@ poetry install
 cp .env.example .env
 
 # Відредагуйте .env файл з вашими налаштуваннями
-# DATABASE_URL=postgresql+asyncpg://hotel_user:your_password@localhost:5432/hotel_db
+# DATABASE_URL=sqlite+aiosqlite:///./hotel.db
 # SECRET_KEY=your-secret-key
 
-# Запустіть міграції
+# Запустіть міграції (база даних створюється автоматично)
 poetry run alembic upgrade head
 
 # Запустіть сервер
@@ -50,7 +40,9 @@ Backend буде доступний за адресою: http://localhost:8000
 
 API документація: http://localhost:8000/docs
 
-### Крок 3: Налаштування Frontend
+**Примітка:** Файл бази даних `hotel.db` буде створений автоматично в папці backend.
+
+### Крок 2: Налаштування Frontend
 
 ```bash
 # Відкрийте новий термінал
@@ -69,7 +61,7 @@ npm start
 
 Frontend буде доступний за адресою: http://localhost:3000
 
-### Крок 4: Створення тестових даних
+### Крок 3: Створення тестових даних
 
 #### Створення користувачів
 
@@ -77,7 +69,8 @@ Frontend буде доступний за адресою: http://localhost:3000
 2. Створіть менеджера через API або базу даних:
 
 ```bash
-# Використайте API endpoint або вручну через PostgreSQL
+# Використайте API endpoint або вручну через SQLite
+# Можна використати DB Browser for SQLite для редагування бази
 ```
 
 Приклад реєстрації менеджера через API (POST /api/auth/register):
@@ -234,9 +227,9 @@ npm test
 
 ### Backend не запускається
 
-1. Перевірте, що PostgreSQL запущений
-2. Перевірте змінні в `.env`
-3. Перевірте, що міграції застосовані: `poetry run alembic current`
+1. Перевірте змінні в `.env` (особливо DATABASE_URL)
+2. Перевірте, що міграції застосовані: `poetry run alembic current`
+3. Перевірте права на запис файлів в папці backend
 
 ### Frontend не може з'єднатися з Backend
 

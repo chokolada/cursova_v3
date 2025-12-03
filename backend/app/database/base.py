@@ -3,10 +3,12 @@ from sqlalchemy.orm import DeclarativeBase
 from app.core.config import settings
 
 # Create async engine
+# For SQLite, we need to enable check_same_thread=False
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     future=True,
+    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
 )
 
 # Create async session factory

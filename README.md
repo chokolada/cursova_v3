@@ -6,7 +6,7 @@
 
 ### Backend
 - **FastAPI** - сучасний веб-фреймворк для створення API
-- **PostgreSQL** - реляційна база даних
+- **SQLite** - легка реляційна база даних (файлова, не потребує окремого сервера)
 - **SQLAlchemy** - ORM для роботи з базою даних
 - **Alembic** - міграції бази даних
 - **Poetry** - управління залежностями
@@ -108,13 +108,13 @@ poetry install
 
 3. Створіть файл `.env`:
 ```env
-DATABASE_URL=postgresql+asyncpg://user:password@localhost/hotel_db
+DATABASE_URL=sqlite+aiosqlite:///./hotel.db
 SECRET_KEY=your-secret-key-here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
-4. Запустіть міграції:
+4. Запустіть міграції (база даних створиться автоматично):
 ```bash
 poetry run alembic upgrade head
 ```
