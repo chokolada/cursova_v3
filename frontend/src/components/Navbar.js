@@ -42,7 +42,7 @@ const Navbar = () => {
             </li>
           )}
 
-          {loading ? null : isAuthenticated() ? (
+          {!loading && isAuthenticated() && (
             <>
               <li className="navbar-item">
                 <span className="navbar-user">
@@ -53,19 +53,6 @@ const Navbar = () => {
                 <button onClick={handleLogout} className="navbar-button">
                   Logout
                 </button>
-              </li>
-            </>
-          ) : (
-            <>
-              <li className="navbar-item">
-                <Link to="/login" className="navbar-link">
-                  Login
-                </Link>
-              </li>
-              <li className="navbar-item">
-                <Link to="/register" className="navbar-link">
-                  Register
-                </Link>
               </li>
             </>
           )}
