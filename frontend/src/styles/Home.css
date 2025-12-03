@@ -1,0 +1,49 @@
+.home-container {
+  padding: 20px;
+}
+
+.home-header {
+  margin-bottom: 30px;
+}
+
+.home-header h1 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.home-filters {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.home-filters label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-filters select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
+  margin-top: 30px;
+}
+
+@media (max-width: 768px) {
+  .rooms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
