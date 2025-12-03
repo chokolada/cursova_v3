@@ -12,6 +12,9 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Check if user is trying to book a room
+  const hasRedirect = localStorage.getItem('redirectAfterLogin');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -19,7 +22,15 @@ const Login = () => {
 
     try {
       await login(username, password);
-      navigate('/');
+
+      // Check if there's a redirect path saved
+      const redirectPath = localStorage.getItem('redirectAfterLogin');
+      if (redirectPath) {
+        localStorage.removeItem('redirectAfterLogin');
+        navigate(redirectPath);
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed');
     } finally {
@@ -31,6 +42,12 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Login</h2>
+
+        {hasRedirect && (
+          <div className="info-message" style={{ backgroundColor: '#e3f2fd', padding: '10px', marginBottom: '15px', borderRadius: '4px', color: '#1976d2' }}>
+            Please login to continue with your booking
+          </div>
+        )}
 
         {error && <div className="error-message">{error}</div>}
 

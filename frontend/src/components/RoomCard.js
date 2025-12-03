@@ -1,12 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/RoomCard.css';
 
 const RoomCard = ({ room }) => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const handleBookNow = () => {
-    navigate(`/booking/${room.id}`);
+    if (!isAuthenticated()) {
+      // Save the intended booking location and redirect to register
+      localStorage.setItem('redirectAfterLogin', `/booking/${room.id}`);
+      navigate('/register');
+    } else {
+      navigate(`/booking/${room.id}`);
+    }
   };
 
   return (

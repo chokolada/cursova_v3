@@ -16,6 +16,9 @@ const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  // Check if user is trying to book a room
+  const hasRedirect = localStorage.getItem('redirectAfterLogin');
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -30,7 +33,13 @@ const Register = () => {
 
     try {
       await register({ ...formData, role: 'user' });
-      alert('Registration successful! Please login.');
+
+      if (hasRedirect) {
+        alert('Registration successful! Please login to complete your booking.');
+      } else {
+        alert('Registration successful! Please login.');
+      }
+
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.detail || 'Registration failed');
@@ -43,6 +52,12 @@ const Register = () => {
     <div className="auth-container">
       <div className="auth-card">
         <h2>Register</h2>
+
+        {hasRedirect && (
+          <div className="info-message" style={{ backgroundColor: '#e3f2fd', padding: '10px', marginBottom: '15px', borderRadius: '4px', color: '#1976d2' }}>
+            Please register to continue with your booking
+          </div>
+        )}
 
         {error && <div className="error-message">{error}</div>}
 

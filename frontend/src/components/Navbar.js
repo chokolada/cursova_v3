@@ -42,18 +42,35 @@ const Navbar = () => {
             </li>
           )}
 
-          {!loading && isAuthenticated() && (
+          {!loading && (
             <>
-              <li className="navbar-item">
-                <span className="navbar-user">
-                  Welcome, {user?.username} ({user?.role})
-                </span>
-              </li>
-              <li className="navbar-item">
-                <button onClick={handleLogout} className="navbar-button">
-                  Logout
-                </button>
-              </li>
+              {isAuthenticated() ? (
+                <>
+                  <li className="navbar-item">
+                    <span className="navbar-user">
+                      Welcome, {user?.username} ({user?.role})
+                    </span>
+                  </li>
+                  <li className="navbar-item">
+                    <button onClick={handleLogout} className="navbar-button">
+                      Logout
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className="navbar-item">
+                    <Link to="/login" className="navbar-link">
+                      Login
+                    </Link>
+                  </li>
+                  <li className="navbar-item">
+                    <Link to="/register" className="navbar-link">
+                      Register
+                    </Link>
+                  </li>
+                </>
+              )}
             </>
           )}
         </ul>
