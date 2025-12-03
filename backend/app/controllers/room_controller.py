@@ -33,6 +33,27 @@ class RoomController:
         """Get rooms by type."""
         return await self.room_repo.get_by_room_type(room_type, skip, limit)
 
+    async def get_rooms_filtered(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        available_only: bool = False,
+        room_type: str = None,
+        min_price: float = None,
+        max_price: float = None,
+        capacity: int = None
+    ) -> List[Room]:
+        """Get rooms with multiple filters applied."""
+        return await self.room_repo.get_rooms_filtered(
+            skip=skip,
+            limit=limit,
+            available_only=available_only,
+            room_type=room_type,
+            min_price=min_price,
+            max_price=max_price,
+            capacity=capacity
+        )
+
     async def create_room(self, room_data: RoomCreate) -> Room:
         """Create a new room."""
         # Check if room number already exists

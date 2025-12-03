@@ -9,7 +9,10 @@
       "Bash(poetry run alembic:*)",
       "Bash(poetry run uvicorn:*)",
       "Bash(python3:*)",
-      "Bash(poetry run python:*)"
+      "Bash(poetry run python:*)",
+      "Bash(timeout 3 sleep:*)",
+      "Bash(sqlite3:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

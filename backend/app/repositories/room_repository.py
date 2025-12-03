@@ -29,3 +29,38 @@ class RoomRepository(BaseRepository[Room]):
             select(Room).where(Room.room_type == room_type).offset(skip).limit(limit)
         )
         return list(result.scalars().all())
+
+    async def get_rooms_filtered(
+        self,
+        skip: int = 0,
+        limit: int = 100,
+        available_only: bool = False,
+        room_type: str = None,
+        min_price: float = None,
+        max_price: float = None,
+        capacity: int = None
+    ) -> List[Room]:
+        """Get rooms with multiple filters."""
+        query = select(Room)
+
+        # Apply filters
+        if available_only:
+            query = query.where(Room.is_available == True)
+
+        if room_type:
+            query = query.where(Room.room_type == room_type)
+
+        if min_price is not None:
+            query = query.where(Room.price_per_night >= min_price)
+
+        if max_price is not None:
+            query = query.where(Room.price_per_night <= max_price)
+
+        if capacity is not None:
+            query = query.where(Room.capacity >= capacity)
+
+        # Apply pagination
+        query = query.offset(skip).limit(limit)
+
+        result = await self.db.execute(query)
+        return list(result.scalars().all())

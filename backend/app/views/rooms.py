@@ -14,17 +14,22 @@ async def get_all_rooms(
     limit: int = 100,
     available_only: bool = Query(False),
     room_type: str = Query(None),
+    min_price: float = Query(None),
+    max_price: float = Query(None),
+    capacity: int = Query(None),
     room_repo: RoomRepository = Depends(get_room_repository)
 ):
     """Get all rooms with optional filters."""
     controller = RoomController(room_repo)
-
-    if available_only:
-        return await controller.get_available_rooms(skip, limit)
-    elif room_type:
-        return await controller.get_rooms_by_type(room_type, skip, limit)
-    else:
-        return await controller.get_all_rooms(skip, limit)
+    return await controller.get_rooms_filtered(
+        skip=skip,
+        limit=limit,
+        available_only=available_only,
+        room_type=room_type,
+        min_price=min_price,
+        max_price=max_price,
+        capacity=capacity
+    )
 
 
 @router.get("/{room_id}", response_model=RoomResponse)
