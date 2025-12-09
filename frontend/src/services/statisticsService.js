@@ -20,6 +20,27 @@ const statisticsService = {
     const response = await api.get('/statistics/regular-customers');
     return response.data;
   },
+
+  async getRevenueGraph(period = 'month', days = 30) {
+    const response = await api.get('/statistics/graphs/revenue', {
+      params: { period, days }
+    });
+    return response.data;
+  },
+
+  async getOccupancyGraph(period = 'month', days = 30) {
+    const response = await api.get('/statistics/graphs/occupancy', {
+      params: { period, days }
+    });
+    return response.data;
+  },
+
+  async getBookingsStatusGraph(period = 'month', days = 30) {
+    const response = await api.get('/statistics/graphs/bookings-status', {
+      params: { period, days }
+    });
+    return response.data;
+  },
 };
 
 export default statisticsService;

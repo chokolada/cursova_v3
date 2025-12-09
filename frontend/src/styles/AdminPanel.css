@@ -239,6 +239,64 @@
   font-weight: 600;
 }
 
+/* Graph Controls */
+.graph-controls {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-group label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.period-selector,
+.days-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.days-input {
+  width: 100px;
+}
+
+.period-selector:focus,
+.days-input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+/* Graph Sections */
+.graph-section {
+  margin-bottom: 40px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.graph-section h3 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
 @media (max-width: 768px) {
   .admin-table {
     font-size: 14px;
@@ -259,5 +317,13 @@
 
   .stat-value {
     font-size: 24px;
+  }
+
+  .graph-controls {
+    flex-direction: column;
+  }
+
+  .graph-section {
+    padding: 15px;
   }
 }

@@ -1,10 +1,12 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Literal
 from datetime import datetime, timedelta
-from sqlalchemy import select, func, and_, extract
+from sqlalchemy import select, func, and_, extract, case
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.booking import Booking, BookingStatus
 from app.models.room import Room
 from app.models.user import User
+
+PeriodType = Literal["day", "week", "month"]
 
 
 class StatisticsController:
@@ -215,3 +217,210 @@ class StatisticsController:
             'total_users': total_users or 0,
             'current_month_revenue': float(current_month_revenue)
         }
+
+    async def get_revenue_over_time(
+        self,
+        period: PeriodType = "month",
+        days: int = 30
+    ) -> List[Dict[str, Any]]:
+        """Get revenue data over time for graphing.
+
+        Args:
+            period: Grouping period - 'day', 'week', or 'month'
+            days: Number of days to look back (default 30)
+        """
+        start_date = datetime.utcnow() - timedelta(days=days)
+
+        if period == "day":
+            # Group by day
+            result = await self.db.execute(
+                select(
+                    func.date(Booking.created_at).label('period'),
+                    func.sum(Booking.total_price).label('revenue'),
+                    func.count(Booking.id).label('booking_count')
+                )
+                .where(
+                    and_(
+                        Booking.created_at >= start_date,
+                        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
+                    )
+                )
+                .group_by(func.date(Booking.created_at))
+                .order_by(func.date(Booking.created_at))
+            )
+        elif period == "week":
+            # Group by week (year + week number)
+            result = await self.db.execute(
+                select(
+                    func.strftime('%Y-W%W', Booking.created_at).label('period'),
+                    func.sum(Booking.total_price).label('revenue'),
+                    func.count(Booking.id).label('booking_count')
+                )
+                .where(
+                    and_(
+                        Booking.created_at >= start_date,
+                        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
+                    )
+                )
+                .group_by(func.strftime('%Y-W%W', Booking.created_at))
+                .order_by(func.strftime('%Y-W%W', Booking.created_at))
+            )
+        else:  # month
+            # Group by month (year + month)
+            result = await self.db.execute(
+                select(
+                    func.strftime('%Y-%m', Booking.created_at).label('period'),
+                    func.sum(Booking.total_price).label('revenue'),
+                    func.count(Booking.id).label('booking_count')
+                )
+                .where(
+                    and_(
+                        Booking.created_at >= start_date,
+                        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
+                    )
+                )
+                .group_by(func.strftime('%Y-%m', Booking.created_at))
+                .order_by(func.strftime('%Y-%m', Booking.created_at))
+            )
+
+        data = []
+        for row in result.all():
+            data.append({
+                'period': str(row.period),
+                'revenue': float(row.revenue or 0),
+                'booking_count': row.booking_count or 0
+            })
+
+        return data
+
+    async def get_occupancy_over_time(
+        self,
+        period: PeriodType = "month",
+        days: int = 30
+    ) -> List[Dict[str, Any]]:
+        """Get room occupancy statistics over time for graphing.
+
+        Args:
+            period: Grouping period - 'day', 'week', or 'month'
+            days: Number of days to look back (default 30)
+        """
+        start_date = datetime.utcnow() - timedelta(days=days)
+
+        # Get total rooms (constant)
+        rooms_result = await self.db.execute(
+            select(func.count(Room.id))
+        )
+        total_rooms = rooms_result.scalar() or 0
+
+        if period == "day":
+            # Group by day
+            result = await self.db.execute(
+                select(
+                    func.date(Booking.check_in).label('period'),
+                    func.count(func.distinct(Booking.room_id)).label('occupied_rooms'),
+                    func.count(Booking.id).label('booking_count')
+                )
+                .where(
+                    and_(
+                        Booking.check_in >= start_date,
+                        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
+                    )
+                )
+                .group_by(func.date(Booking.check_in))
+                .order_by(func.date(Booking.check_in))
+            )
+        elif period == "week":
+            # Group by week
+            result = await self.db.execute(
+                select(
+                    func.strftime('%Y-W%W', Booking.check_in).label('period'),
+                    func.count(func.distinct(Booking.room_id)).label('occupied_rooms'),
+                    func.count(Booking.id).label('booking_count')
+                )
+                .where(
+                    and_(
+                        Booking.check_in >= start_date,
+                        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
+                    )
+                )
+                .group_by(func.strftime('%Y-W%W', Booking.check_in))
+                .order_by(func.strftime('%Y-W%W', Booking.check_in))
+            )
+        else:  # month
+            # Group by month
+            result = await self.db.execute(
+                select(
+                    func.strftime('%Y-%m', Booking.check_in).label('period'),
+                    func.count(func.distinct(Booking.room_id)).label('occupied_rooms'),
+                    func.count(Booking.id).label('booking_count')
+                )
+                .where(
+                    and_(
+                        Booking.check_in >= start_date,
+                        Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
+                    )
+                )
+                .group_by(func.strftime('%Y-%m', Booking.check_in))
+                .order_by(func.strftime('%Y-%m', Booking.check_in))
+            )
+
+        data = []
+        for row in result.all():
+            occupied = row.occupied_rooms or 0
+            occupancy_rate = (occupied / total_rooms * 100) if total_rooms > 0 else 0
+            data.append({
+                'period': str(row.period),
+                'occupied_rooms': occupied,
+                'total_rooms': total_rooms,
+                'occupancy_rate': round(occupancy_rate, 2),
+                'booking_count': row.booking_count or 0
+            })
+
+        return data
+
+    async def get_bookings_by_status_over_time(
+        self,
+        period: PeriodType = "month",
+        days: int = 30
+    ) -> List[Dict[str, Any]]:
+        """Get booking counts by status over time for graphing.
+
+        Args:
+            period: Grouping period - 'day', 'week', or 'month'
+            days: Number of days to look back (default 30)
+        """
+        start_date = datetime.utcnow() - timedelta(days=days)
+
+        if period == "day":
+            period_expr = func.date(Booking.created_at)
+        elif period == "week":
+            period_expr = func.strftime('%Y-W%W', Booking.created_at)
+        else:  # month
+            period_expr = func.strftime('%Y-%m', Booking.created_at)
+
+        result = await self.db.execute(
+            select(
+                period_expr.label('period'),
+                Booking.status,
+                func.count(Booking.id).label('count')
+            )
+            .where(Booking.created_at >= start_date)
+            .group_by(period_expr, Booking.status)
+            .order_by(period_expr)
+        )
+
+        # Organize data by period
+        data_by_period = {}
+        for row in result.all():
+            period_str = str(row.period)
+            if period_str not in data_by_period:
+                data_by_period[period_str] = {
+                    'period': period_str,
+                    'pending': 0,
+                    'confirmed': 0,
+                    'cancelled': 0,
+                    'completed': 0
+                }
+            data_by_period[period_str][row.status.value] = row.count
+
+        return list(data_by_period.values())

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import roomService from '../services/roomService';
 import bookingService from '../services/bookingService';
 import offerService from '../services/offerService';
@@ -16,6 +17,13 @@ const AdminPanel = () => {
     financial: null,
     regularCustomers: []
   });
+  const [graphData, setGraphData] = useState({
+    revenue: [],
+    occupancy: [],
+    bookingsStatus: []
+  });
+  const [graphPeriod, setGraphPeriod] = useState('month');
+  const [graphDays, setGraphDays] = useState(30);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -51,8 +59,16 @@ const AdminPanel = () => {
       loadOffers();
     } else if (activeTab === 'statistics') {
       loadStatistics();
+    } else if (activeTab === 'graphs') {
+      loadGraphs();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'graphs') {
+      loadGraphs();
+    }
+  }, [graphPeriod, graphDays]);
 
   const loadRooms = async () => {
     setLoading(true);
@@ -111,6 +127,27 @@ const AdminPanel = () => {
       });
     } catch (err) {
       setError('Failed to load statistics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadGraphs = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [revenue, occupancy, bookingsStatus] = await Promise.all([
+        statisticsService.getRevenueGraph(graphPeriod, graphDays),
+        statisticsService.getOccupancyGraph(graphPeriod, graphDays),
+        statisticsService.getBookingsStatusGraph(graphPeriod, graphDays)
+      ]);
+      setGraphData({
+        revenue,
+        occupancy,
+        bookingsStatus
+      });
+    } catch (err) {
+      setError('Failed to load graph data');
     } finally {
       setLoading(false);
     }
@@ -308,6 +345,12 @@ const AdminPanel = () => {
           onClick={() => setActiveTab('statistics')}
         >
           Statistics
+        </button>
+        <button
+          className={activeTab === 'graphs' ? 'active' : ''}
+          onClick={() => setActiveTab('graphs')}
+        >
+          Statistics (Graph)
         </button>
         <button
           className={activeTab === 'bookings' ? 'active' : ''}
@@ -767,6 +810,112 @@ const AdminPanel = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'graphs' && (
+        <div className="admin-section">
+          <h2>Statistics Graphs</h2>
+
+          <div className="graph-controls">
+            <div className="control-group">
+              <label>Time Period:</label>
+              <select
+                value={graphPeriod}
+                onChange={(e) => setGraphPeriod(e.target.value)}
+                className="period-selector"
+              >
+                <option value="day">Daily</option>
+                <option value="week">Weekly</option>
+                <option value="month">Monthly</option>
+              </select>
+            </div>
+
+            <div className="control-group">
+              <label>Look Back (days):</label>
+              <input
+                type="number"
+                value={graphDays}
+                onChange={(e) => setGraphDays(parseInt(e.target.value))}
+                min="1"
+                max="365"
+                className="days-input"
+              />
+            </div>
+          </div>
+
+          {loading ? (
+            <div>Loading graphs...</div>
+          ) : (
+            <>
+              <div className="graph-section">
+                <h3>Revenue Over Time</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={graphData.revenue}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#8884d8"
+                      name="Revenue ($)"
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="booking_count"
+                      stroke="#82ca9d"
+                      name="Bookings"
+                      strokeWidth={2}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="graph-section">
+                <h3>Room Occupancy Over Time</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={graphData.occupancy}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar
+                      dataKey="occupied_rooms"
+                      fill="#8884d8"
+                      name="Occupied Rooms"
+                    />
+                    <Bar
+                      dataKey="occupancy_rate"
+                      fill="#82ca9d"
+                      name="Occupancy Rate (%)"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="graph-section">
+                <h3>Bookings by Status Over Time</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={graphData.bookingsStatus}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="pending" stackId="a" fill="#ffc658" name="Pending" />
+                    <Bar dataKey="confirmed" stackId="a" fill="#82ca9d" name="Confirmed" />
+                    <Bar dataKey="completed" stackId="a" fill="#8884d8" name="Completed" />
+                    <Bar dataKey="cancelled" stackId="a" fill="#ff8042" name="Cancelled" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </>
           )}
