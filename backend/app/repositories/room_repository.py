@@ -12,6 +12,25 @@ class RoomRepository(BaseRepository[Room]):
     def __init__(self, db: AsyncSession):
         super().__init__(Room, db)
 
+    async def get(self, id: int) -> Optional[Room]:
+        """Get a single room by ID with available offers."""
+        result = await self.db.execute(
+            select(Room)
+            .options(selectinload(Room.available_offers))
+            .where(Room.id == id)
+        )
+        return result.scalar_one_or_none()
+
+    async def get_all(self, skip: int = 0, limit: int = 100) -> List[Room]:
+        """Get all rooms with available offers."""
+        result = await self.db.execute(
+            select(Room)
+            .options(selectinload(Room.available_offers))
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
     async def get_by_room_number(self, room_number: str) -> Optional[Room]:
         """Get room by room number."""
         result = await self.db.execute(select(Room).where(Room.room_number == room_number))
