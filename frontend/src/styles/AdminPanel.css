@@ -113,6 +113,40 @@
   color: #0c5460;
 }
 
+.offer-form-section,
+.offers-list-section {
+  margin-bottom: 40px;
+}
+
+.offer-form-section {
+  padding-bottom: 40px;
+  border-bottom: 2px solid #eee;
+}
+
+.offer-form-section h2,
+.offers-list-section h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.type-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.type-badge.type-global {
+  background-color: #cfe2ff;
+  color: #084298;
+}
+
+.type-badge.type-room_specific {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
 @media (max-width: 768px) {
   .admin-table {
     font-size: 14px;
