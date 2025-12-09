@@ -12,6 +12,41 @@ class BookingRepository(BaseRepository[Booking]):
     def __init__(self, db: AsyncSession):
         super().__init__(Booking, db)
 
+    async def create(self, booking: Booking) -> Booking:
+        """Create a new booking and reload with relationships."""
+        self.db.add(booking)
+        await self.db.flush()
+        await self.db.refresh(booking)
+
+        # Reload the booking with all relationships
+        result = await self.db.execute(
+            select(Booking)
+            .options(
+                selectinload(Booking.user),
+                selectinload(Booking.room),
+                selectinload(Booking.selected_offers)
+            )
+            .where(Booking.id == booking.id)
+        )
+        return result.scalar_one()
+
+    async def update(self, booking: Booking) -> Booking:
+        """Update booking and reload with relationships."""
+        await self.db.flush()
+        await self.db.refresh(booking)
+
+        # Reload the booking with all relationships
+        result = await self.db.execute(
+            select(Booking)
+            .options(
+                selectinload(Booking.user),
+                selectinload(Booking.room),
+                selectinload(Booking.selected_offers)
+            )
+            .where(Booking.id == booking.id)
+        )
+        return result.scalar_one()
+
     async def get_all(self, skip: int = 0, limit: int = 100) -> List[Booking]:
         """Get all bookings with relations."""
         result = await self.db.execute(
