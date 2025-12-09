@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import roomService from '../services/roomService';
 import bookingService from '../services/bookingService';
 import offerService from '../services/offerService';
+import statisticsService from '../services/statisticsService';
 import '../styles/AdminPanel.css';
 
 const AdminPanel = () => {
@@ -9,6 +10,12 @@ const AdminPanel = () => {
   const [rooms, setRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [offers, setOffers] = useState([]);
+  const [statistics, setStatistics] = useState({
+    dashboard: null,
+    roomOccupancy: [],
+    financial: null,
+    regularCustomers: []
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,6 +49,8 @@ const AdminPanel = () => {
       loadBookings();
     } else if (activeTab === 'offers') {
       loadOffers();
+    } else if (activeTab === 'statistics') {
+      loadStatistics();
     }
   }, [activeTab]);
 
@@ -79,6 +88,29 @@ const AdminPanel = () => {
       setOffers(data);
     } catch (err) {
       setError('Failed to load offers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStatistics = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [dashboard, roomOccupancy, financial, regularCustomers] = await Promise.all([
+        statisticsService.getDashboardSummary(),
+        statisticsService.getRoomOccupancy(),
+        statisticsService.getFinancialMetrics(),
+        statisticsService.getRegularCustomers()
+      ]);
+      setStatistics({
+        dashboard,
+        roomOccupancy,
+        financial,
+        regularCustomers
+      });
+    } catch (err) {
+      setError('Failed to load statistics');
     } finally {
       setLoading(false);
     }
@@ -270,6 +302,12 @@ const AdminPanel = () => {
           onClick={() => setActiveTab('offers')}
         >
           Manage Offers
+        </button>
+        <button
+          className={activeTab === 'statistics' ? 'active' : ''}
+          onClick={() => setActiveTab('statistics')}
+        >
+          Statistics
         </button>
         <button
           className={activeTab === 'bookings' ? 'active' : ''}
@@ -575,6 +613,163 @@ const AdminPanel = () => {
               </table>
             )}
           </div>
+        </div>
+      )}
+
+      {activeTab === 'statistics' && (
+        <div className="admin-section">
+          <h2>Statistics & Analytics</h2>
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <>
+              {/* Dashboard Summary */}
+              {statistics.dashboard && (
+                <div className="stats-summary">
+                  <h3>Dashboard Summary</h3>
+                  <div className="stats-cards">
+                    <div className="stat-card">
+                      <div className="stat-value">{statistics.dashboard.total_rooms}</div>
+                      <div className="stat-label">Total Rooms</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-value">{statistics.dashboard.available_rooms}</div>
+                      <div className="stat-label">Available Rooms</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-value">{statistics.dashboard.occupied_rooms}</div>
+                      <div className="stat-label">Occupied Rooms</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-value">{statistics.dashboard.total_users}</div>
+                      <div className="stat-label">Total Users</div>
+                    </div>
+                    <div className="stat-card">
+                      <div className="stat-value">${statistics.dashboard.current_month_revenue.toFixed(2)}</div>
+                      <div className="stat-label">Current Month Revenue</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Room Occupancy */}
+              <div className="stats-section">
+                <h3>Room Occupancy</h3>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Room #</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                      <th>Total Bookings</th>
+                      <th>Confirmed Bookings</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statistics.roomOccupancy.map((room) => (
+                      <tr key={room.room_id}>
+                        <td>{room.room_number}</td>
+                        <td>{room.room_type}</td>
+                        <td>
+                          <span className={room.is_available ? 'status-available' : 'status-occupied'}>
+                            {room.is_available ? 'Available' : 'Occupied'}
+                          </span>
+                        </td>
+                        <td>{room.total_bookings}</td>
+                        <td>{room.confirmed_bookings}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Financial Metrics */}
+              {statistics.financial && (
+                <div className="stats-section">
+                  <h3>Financial Metrics</h3>
+                  <div className="financial-summary">
+                    <div className="financial-stat">
+                      <strong>Total Revenue:</strong> ${statistics.financial.total_revenue.toFixed(2)}
+                    </div>
+                    <div className="financial-stat">
+                      <strong>Total Bookings:</strong> {statistics.financial.total_bookings}
+                    </div>
+                  </div>
+
+                  <h4>Room Type Popularity</h4>
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Room Type</th>
+                        <th>Bookings</th>
+                        <th>Total Revenue</th>
+                        <th>Avg Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {statistics.financial.room_type_popularity.map((type) => (
+                        <tr key={type.room_type}>
+                          <td>{type.room_type}</td>
+                          <td>{type.booking_count}</td>
+                          <td>${type.total_revenue.toFixed(2)}</td>
+                          <td>${type.avg_price.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  <h4>Monthly Revenue (Last 12 Months)</h4>
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Month</th>
+                        <th>Revenue</th>
+                        <th>Bookings</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {statistics.financial.monthly_revenue.map((month, index) => (
+                        <tr key={index}>
+                          <td>{month.year}-{String(month.month).padStart(2, '0')}</td>
+                          <td>${month.revenue.toFixed(2)}</td>
+                          <td>{month.booking_count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Regular Customers */}
+              <div className="stats-section">
+                <h3>Regular Customers</h3>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>Email</th>
+                      <th>Full Name</th>
+                      <th>Bookings</th>
+                      <th>Total Spent</th>
+                      <th>Last Booking</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statistics.regularCustomers.map((customer) => (
+                      <tr key={customer.user_id}>
+                        <td>{customer.username}</td>
+                        <td>{customer.email}</td>
+                        <td>{customer.full_name}</td>
+                        <td>{customer.booking_count}</td>
+                        <td>${customer.total_spent.toFixed(2)}</td>
+                        <td>{customer.last_booking_date ? formatDate(customer.last_booking_date) : 'N/A'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       )}
 
