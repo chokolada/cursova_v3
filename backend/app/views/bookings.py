@@ -5,11 +5,13 @@ from app.schemas.booking import BookingCreate, BookingUpdate, BookingResponse
 from app.dependencies import (
     get_booking_repository,
     get_room_repository,
+    get_offer_repository,
     get_current_user,
     require_manager
 )
 from app.repositories.booking_repository import BookingRepository
 from app.repositories.room_repository import RoomRepository
+from app.repositories.offer_repository import OfferRepository
 from app.models.user import User
 
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
@@ -57,10 +59,11 @@ async def create_booking(
     booking_data: BookingCreate,
     current_user: User = Depends(get_current_user),
     booking_repo: BookingRepository = Depends(get_booking_repository),
-    room_repo: RoomRepository = Depends(get_room_repository)
+    room_repo: RoomRepository = Depends(get_room_repository),
+    offer_repo: OfferRepository = Depends(get_offer_repository)
 ):
     """Create a new booking."""
-    controller = BookingController(booking_repo, room_repo)
+    controller = BookingController(booking_repo, room_repo, offer_repo)
     return await controller.create_booking(booking_data, current_user.id)
 
 

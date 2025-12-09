@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
 
 class RoomBase(BaseModel):
@@ -36,6 +36,12 @@ class RoomResponse(RoomBase):
     """Schema for room response."""
     id: int
     is_available: bool
+    available_offers: List['OfferResponse'] = []
 
     class Config:
         from_attributes = True
+
+
+# Import after to avoid circular dependency
+from app.schemas.offer import OfferResponse
+RoomResponse.model_rebuild()

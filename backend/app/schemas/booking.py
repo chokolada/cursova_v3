@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from app.models.booking import BookingStatus
+from app.schemas.offer import OfferResponse
 
 
 class BookingBase(BaseModel):
@@ -10,7 +11,7 @@ class BookingBase(BaseModel):
     check_in_date: datetime
     check_out_date: datetime
     guests_count: int = Field(..., gt=0)
-    special_requests: Optional[str] = Field(None, max_length=500)
+    special_requests: Optional[str] = None
 
     @field_validator('check_out_date')
     @classmethod
@@ -23,7 +24,7 @@ class BookingBase(BaseModel):
 
 class BookingCreate(BookingBase):
     """Schema for creating a booking."""
-    pass
+    offer_ids: List[int] = Field(default_factory=list, description="List of offer IDs to include in booking")
 
 
 class BookingUpdate(BaseModel):
@@ -32,7 +33,8 @@ class BookingUpdate(BaseModel):
     check_out_date: Optional[datetime] = None
     guests_count: Optional[int] = Field(None, gt=0)
     status: Optional[BookingStatus] = None
-    special_requests: Optional[str] = Field(None, max_length=500)
+    special_requests: Optional[str] = None
+    offer_ids: Optional[List[int]] = None
 
 
 class BookingResponse(BookingBase):
@@ -43,6 +45,7 @@ class BookingResponse(BookingBase):
     status: BookingStatus
     created_at: datetime
     updated_at: datetime
+    selected_offers: List[OfferResponse] = []
 
     class Config:
         from_attributes = True

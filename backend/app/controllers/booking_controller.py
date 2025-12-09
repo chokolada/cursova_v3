@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import HTTPException, status
 from app.repositories.booking_repository import BookingRepository
 from app.repositories.room_repository import RoomRepository
+from app.repositories.offer_repository import OfferRepository
 from app.models.booking import Booking, BookingStatus
 from app.models.user import User, UserRole
 from app.schemas.booking import BookingCreate, BookingUpdate
@@ -11,9 +12,10 @@ from app.schemas.booking import BookingCreate, BookingUpdate
 class BookingController:
     """Controller for booking operations."""
 
-    def __init__(self, booking_repo: BookingRepository, room_repo: RoomRepository):
+    def __init__(self, booking_repo: BookingRepository, room_repo: RoomRepository, offer_repo: OfferRepository = None):
         self.booking_repo = booking_repo
         self.room_repo = room_repo
+        self.offer_repo = offer_repo
 
     async def get_booking(self, booking_id: int, current_user: User) -> Booking:
         """Get booking by ID."""
@@ -74,6 +76,38 @@ class BookingController:
 
         total_price = days * room.price_per_night
 
+        # Handle offers if any selected
+        selected_offers = []
+        if booking_data.offer_ids and self.offer_repo:
+            # Fetch room with available offers
+            from sqlalchemy import select
+            from sqlalchemy.orm import selectinload
+            from app.models.room import Room
+            from app.database import AsyncSessionLocal
+
+            async with AsyncSessionLocal() as session:
+                result = await session.execute(
+                    select(Room).where(Room.id == room.id).options(selectinload(Room.available_offers))
+                )
+                room_with_offers = result.scalar_one_or_none()
+                available_offer_ids = [o.id for o in room_with_offers.available_offers]
+
+            # Validate and fetch selected offers
+            for offer_id in booking_data.offer_ids:
+                if offer_id not in available_offer_ids:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Offer {offer_id} is not available for this room"
+                    )
+                offer = await self.offer_repo.get(offer_id)
+                if not offer or not offer.is_active:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Offer {offer_id} is not available"
+                    )
+                selected_offers.append(offer)
+                total_price += offer.price
+
         # Create booking
         booking = Booking(
             user_id=user_id,
@@ -85,6 +119,10 @@ class BookingController:
             special_requests=booking_data.special_requests,
             status=BookingStatus.PENDING,
         )
+
+        # Assign offers to booking
+        if selected_offers:
+            booking.selected_offers = selected_offers
 
         return await self.booking_repo.create(booking)
 
