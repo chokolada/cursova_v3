@@ -52,12 +52,14 @@ class Offer(Base):
     rooms: Mapped[List["Room"]] = relationship(
         "Room",
         secondary=room_offers,
-        back_populates="available_offers"
+        back_populates="available_offers",
+        lazy="noload"
     )
     bookings: Mapped[List["Booking"]] = relationship(
         "Booking",
         secondary=booking_offers,
-        back_populates="selected_offers"
+        back_populates="selected_offers",
+        lazy="noload"
     )
 
     def __repr__(self) -> str:
