@@ -12,11 +12,29 @@ class BookingRepository(BaseRepository[Booking]):
     def __init__(self, db: AsyncSession):
         super().__init__(Booking, db)
 
+    async def get_all(self, skip: int = 0, limit: int = 100) -> List[Booking]:
+        """Get all bookings with relations."""
+        result = await self.db.execute(
+            select(Booking)
+            .options(
+                selectinload(Booking.user),
+                selectinload(Booking.room),
+                selectinload(Booking.selected_offers)
+            )
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
     async def get_with_relations(self, id: int):
         """Get booking with user and room relations."""
         result = await self.db.execute(
             select(Booking)
-            .options(selectinload(Booking.user), selectinload(Booking.room))
+            .options(
+                selectinload(Booking.user),
+                selectinload(Booking.room),
+                selectinload(Booking.selected_offers)
+            )
             .where(Booking.id == id)
         )
         return result.scalar_one_or_none()
@@ -25,7 +43,10 @@ class BookingRepository(BaseRepository[Booking]):
         """Get all bookings for a specific user."""
         result = await self.db.execute(
             select(Booking)
-            .options(selectinload(Booking.room))
+            .options(
+                selectinload(Booking.room),
+                selectinload(Booking.selected_offers)
+            )
             .where(Booking.user_id == user_id)
             .offset(skip)
             .limit(limit)
@@ -36,7 +57,10 @@ class BookingRepository(BaseRepository[Booking]):
         """Get all bookings for a specific room."""
         result = await self.db.execute(
             select(Booking)
-            .options(selectinload(Booking.user))
+            .options(
+                selectinload(Booking.user),
+                selectinload(Booking.selected_offers)
+            )
             .where(Booking.room_id == room_id)
             .offset(skip)
             .limit(limit)
@@ -47,7 +71,11 @@ class BookingRepository(BaseRepository[Booking]):
         """Get bookings by status."""
         result = await self.db.execute(
             select(Booking)
-            .options(selectinload(Booking.user), selectinload(Booking.room))
+            .options(
+                selectinload(Booking.user),
+                selectinload(Booking.room),
+                selectinload(Booking.selected_offers)
+            )
             .where(Booking.status == status)
             .offset(skip)
             .limit(limit)

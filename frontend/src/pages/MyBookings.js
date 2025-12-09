@@ -97,6 +97,18 @@ const MyBookings = () => {
                   <strong>Special Requests:</strong> {booking.special_requests}
                 </p>
               )}
+              {booking.selected_offers && booking.selected_offers.length > 0 && (
+                <div className="booking-offers">
+                  <strong>Additional Services:</strong>
+                  <ul className="offers-list">
+                    {booking.selected_offers.map((offer) => (
+                      <li key={offer.id}>
+                        {offer.name} - ${offer.price}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             {booking.status === 'pending' && (

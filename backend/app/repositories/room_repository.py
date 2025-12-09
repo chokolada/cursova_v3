@@ -1,5 +1,6 @@
 from typing import List, Optional
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.room import Room
 from app.repositories.base import BaseRepository
@@ -41,7 +42,7 @@ class RoomRepository(BaseRepository[Room]):
         capacity: int = None
     ) -> List[Room]:
         """Get rooms with multiple filters."""
-        query = select(Room)
+        query = select(Room).options(selectinload(Room.available_offers))
 
         # Apply filters
         if available_only:
