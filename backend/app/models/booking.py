@@ -1,9 +1,12 @@
-from sqlalchemy import String, Integer, Float, ForeignKey, DateTime, Enum as SQLEnum
+from sqlalchemy import String, Integer, Float, ForeignKey, DateTime, Enum as SQLEnum, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, TYPE_CHECKING
 import enum
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.offer import Offer
 
 
 class BookingStatus(str, enum.Enum):
@@ -35,7 +38,7 @@ class Booking(Base):
         nullable=False
     )
 
-    special_requests: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    special_requests: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -45,6 +48,11 @@ class Booking(Base):
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="bookings")
     room: Mapped["Room"] = relationship("Room", back_populates="bookings")
+    selected_offers: Mapped[List["Offer"]] = relationship(
+        "Offer",
+        secondary="booking_offers",
+        back_populates="bookings"
+    )
 
     def __repr__(self) -> str:
         return f"<Booking {self.id} - Room {self.room_id} - User {self.user_id}>"

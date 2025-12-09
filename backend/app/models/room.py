@@ -1,7 +1,10 @@
 from sqlalchemy import String, Integer, Float, Text, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.offer import Offer
 
 
 class Room(Base):
@@ -23,6 +26,11 @@ class Room(Base):
     # Relationships
     bookings: Mapped[List["Booking"]] = relationship(
         "Booking", back_populates="room", cascade="all, delete-orphan"
+    )
+    available_offers: Mapped[List["Offer"]] = relationship(
+        "Offer",
+        secondary="room_offers",
+        back_populates="rooms"
     )
 
     def __repr__(self) -> str:

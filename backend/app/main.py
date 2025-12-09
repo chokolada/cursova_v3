@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.views import auth, users, rooms, bookings
+from app.views import auth, users, rooms, bookings, offers
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -23,6 +23,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(rooms.router, prefix="/api")
 app.include_router(bookings.router, prefix="/api")
+app.include_router(offers.router, prefix="/api")
 
 
 @app.get("/")

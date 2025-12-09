@@ -9,6 +9,7 @@ from app.dependencies.repositories import (
     get_user_repository,
     get_room_repository,
     get_booking_repository,
+    get_offer_repository,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "get_user_repository",
     "get_room_repository",
     "get_booking_repository",
+    "get_offer_repository",
 ]
