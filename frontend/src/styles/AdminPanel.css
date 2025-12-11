@@ -483,3 +483,8 @@
 .btn-danger:hover {
   background-color: #c0392b;
 }
+
+.btn-small {
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+}

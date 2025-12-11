@@ -393,7 +393,12 @@ const AdminPanel = () => {
     try {
       await bookingService.confirmBooking(bookingId);
       alert('Booking confirmed successfully');
-      loadBookings();
+      // Reload data based on active tab
+      if (activeTab === 'bookings') {
+        loadBookings();
+      } else if (activeTab === 'occupancy') {
+        loadRoomOccupancy();
+      }
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to confirm booking');
     }
@@ -407,7 +412,12 @@ const AdminPanel = () => {
     try {
       await bookingService.declineBooking(bookingId);
       alert('Booking declined successfully');
-      loadBookings();
+      // Reload data based on active tab
+      if (activeTab === 'bookings') {
+        loadBookings();
+      } else if (activeTab === 'occupancy') {
+        loadRoomOccupancy();
+      }
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to decline booking');
     }
@@ -1204,6 +1214,22 @@ const AdminPanel = () => {
                             <span className={`status-badge status-${currentBooking.status}`}>
                               {currentBooking.status}
                             </span>
+                            {currentBooking.status === 'pending' && (
+                              <div className="action-buttons" style={{marginTop: '10px'}}>
+                                <button
+                                  onClick={() => handleConfirmBooking(currentBooking.id)}
+                                  className="btn-success"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => handleDeclineBooking(currentBooking.id)}
+                                  className="btn-danger"
+                                >
+                                  Decline
+                                </button>
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <span className="no-booking">—</span>
@@ -1223,6 +1249,22 @@ const AdminPanel = () => {
                                 <span className={`status-badge status-${booking.status}`}>
                                   {booking.status}
                                 </span>
+                                {booking.status === 'pending' && (
+                                  <div className="action-buttons" style={{marginTop: '8px'}}>
+                                    <button
+                                      onClick={() => handleConfirmBooking(booking.id)}
+                                      className="btn-success btn-small"
+                                    >
+                                      Confirm
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeclineBooking(booking.id)}
+                                      className="btn-danger btn-small"
+                                    >
+                                      Decline
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
