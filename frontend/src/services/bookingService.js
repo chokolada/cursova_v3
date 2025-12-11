@@ -31,6 +31,11 @@ const bookingService = {
     return response.data;
   },
 
+  async extendBooking(id, days) {
+    const response = await api.post(`/bookings/${id}/extend`, { days });
+    return response.data;
+  },
+
   async deleteBooking(id) {
     await api.delete(`/bookings/${id}`);
   },

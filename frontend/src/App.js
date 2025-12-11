@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import BookingForm from './pages/BookingForm';
 import MyBookings from './pages/MyBookings';
 import AdminPanel from './pages/AdminPanel';
+import UserDashboard from './pages/UserDashboard';
 import './styles/App.css';
 
 function App() {
@@ -35,6 +36,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MyBookings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <UserDashboard />
                   </ProtectedRoute>
                 }
               />
