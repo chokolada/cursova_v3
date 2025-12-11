@@ -41,6 +41,11 @@ const statisticsService = {
     });
     return response.data;
   },
+
+  async getRoomCategoryPopularity() {
+    const response = await api.get('/statistics/room-category-popularity');
+    return response.data;
+  },
 };
 
 export default statisticsService;

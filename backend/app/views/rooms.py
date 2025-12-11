@@ -17,6 +17,7 @@ async def get_all_rooms(
     min_price: float = Query(None),
     max_price: float = Query(None),
     capacity: int = Query(None),
+    amenities: str = Query(None),
     room_repo: RoomRepository = Depends(get_room_repository)
 ):
     """Get all rooms with optional filters."""
@@ -28,7 +29,8 @@ async def get_all_rooms(
         room_type=room_type,
         min_price=min_price,
         max_price=max_price,
-        capacity=capacity
+        capacity=capacity,
+        amenities=amenities
     )
 
 

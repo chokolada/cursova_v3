@@ -1,5 +1,5 @@
-from typing import List
-from datetime import datetime
+from typing import List, Iterable
+from datetime import datetime, timedelta
 from fastapi import HTTPException, status
 from app.repositories.booking_repository import BookingRepository
 from app.repositories.room_repository import RoomRepository
@@ -7,15 +7,49 @@ from app.repositories.offer_repository import OfferRepository
 from app.models.booking import Booking, BookingStatus
 from app.models.user import User, UserRole
 from app.schemas.booking import BookingCreate, BookingUpdate
+from app.services.pricing_strategies import PricingContext, StandardPricingStrategy, LongStayDiscountStrategy
 
 
 class BookingController:
-    """Controller for booking operations."""
+    """Controller for booking operations with Strategy-based pricing."""
+
+    LONG_STAY_THRESHOLD = 7
+    LONG_STAY_DISCOUNT = 0.1
 
     def __init__(self, booking_repo: BookingRepository, room_repo: RoomRepository, offer_repo: OfferRepository = None):
         self.booking_repo = booking_repo
         self.room_repo = room_repo
         self.offer_repo = offer_repo
+
+    def _select_pricing_strategy(self, days: int):
+        """Pick pricing strategy based on booking duration."""
+        if days >= self.LONG_STAY_THRESHOLD:
+            return LongStayDiscountStrategy(
+                threshold_days=self.LONG_STAY_THRESHOLD,
+                discount_rate=self.LONG_STAY_DISCOUNT,
+            )
+        return StandardPricingStrategy()
+
+    def _calculate_total_price(
+        self,
+        room,
+        check_in: datetime,
+        check_out: datetime,
+        offers: Iterable = None,
+    ) -> float:
+        days = (check_out - check_in).days
+        if days <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Check-out date must be after check-in date",
+            )
+
+        strategy = self._select_pricing_strategy(days)
+        context = PricingContext(strategy)
+        try:
+            return context.calculate(room, check_in, check_out, offers)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     async def get_booking(self, booking_id: int, current_user: User) -> Booking:
         """Get booking by ID."""
@@ -78,17 +112,6 @@ class BookingController:
                 detail="Room is already booked for the selected dates"
             )
 
-        # Calculate total price
-        days = (booking_data.check_out_date - booking_data.check_in_date).days
-        if days <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Check-out date must be after check-in date"
-            )
-
-        total_price = days * room.price_per_night
-
-        # Handle offers if any selected
         selected_offers = []
         if booking_data.offer_ids and self.offer_repo:
             # Fetch room with available offers
@@ -118,7 +141,13 @@ class BookingController:
                         detail=f"Offer {offer_id} is not available"
                     )
                 selected_offers.append(offer)
-                total_price += offer.price
+
+        total_price = self._calculate_total_price(
+            room,
+            booking_data.check_in_date,
+            booking_data.check_out_date,
+            selected_offers,
+        )
 
         # Create booking
         booking = Booking(
@@ -181,8 +210,12 @@ class BookingController:
                     detail="Room is already booked for the selected dates"
                 )
 
-            days = (booking.check_out_date - booking.check_in_date).days
-            booking.total_price = days * room.price_per_night
+            booking.total_price = self._calculate_total_price(
+                room,
+                new_check_in,
+                new_check_out,
+                booking.selected_offers or [],
+            )
 
         return await self.booking_repo.update(booking)
 
@@ -245,8 +278,6 @@ class BookingController:
 
     async def extend_booking(self, booking_id: int, days: int, current_user: User) -> Booking:
         """Extend a booking by adding days to check-out date."""
-        from datetime import timedelta
-
         booking = await self.booking_repo.get(booking_id)
         if not booking:
             raise HTTPException(
@@ -296,13 +327,12 @@ class BookingController:
 
         # Recalculate total price
         room = await self.room_repo.get(booking.room_id)
-        duration = (booking.check_out_date - booking.check_in_date).days
-        booking.total_price = room.price_per_night * duration
-
-        # Add offer prices if any
-        if booking.selected_offers:
-            for offer in booking.selected_offers:
-                booking.total_price += offer.price
+        booking.total_price = self._calculate_total_price(
+            room,
+            booking.check_in_date,
+            new_check_out,
+            booking.selected_offers or [],
+        )
 
         return await self.booking_repo.update(booking)
 

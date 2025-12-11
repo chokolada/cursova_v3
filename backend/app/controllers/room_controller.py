@@ -41,7 +41,8 @@ class RoomController:
         room_type: str = None,
         min_price: float = None,
         max_price: float = None,
-        capacity: int = None
+        capacity: int = None,
+        amenities: str = None
     ) -> List[Room]:
         """Get rooms with multiple filters applied."""
         return await self.room_repo.get_rooms_filtered(
@@ -51,7 +52,8 @@ class RoomController:
             room_type=room_type,
             min_price=min_price,
             max_price=max_price,
-            capacity=capacity
+            capacity=capacity,
+            amenities=amenities
         )
 
     async def create_room(self, room_data: RoomCreate) -> Room:

@@ -13,6 +13,7 @@ const Home = () => {
     min_price: '',
     max_price: '',
     capacity: '',
+    amenities: '',
   });
 
   useEffect(() => {
@@ -30,6 +31,7 @@ const Home = () => {
       if (filter.min_price) params.min_price = filter.min_price;
       if (filter.max_price) params.max_price = filter.max_price;
       if (filter.capacity) params.capacity = filter.capacity;
+      if (filter.amenities) params.amenities = filter.amenities;
 
       const data = await roomService.getAllRooms(params);
       setRooms(data);
@@ -97,6 +99,13 @@ const Home = () => {
             <option value="3">3+ guests</option>
             <option value="4">4+ guests</option>
           </select>
+
+          <input
+            type="text"
+            placeholder="Search Amenities (WiFi, TV, etc.)"
+            value={filter.amenities}
+            onChange={(e) => setFilter({ ...filter, amenities: e.target.value })}
+          />
         </div>
       </div>
 

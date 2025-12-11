@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.booking import Booking, BookingStatus
 from app.models.room import Room
 from app.models.user import User
+from app.services.statistics_builder import StatisticsResponseBuilder
 
 PeriodType = Literal["day", "week", "month"]
 
@@ -165,6 +166,40 @@ class StatisticsController:
 
         return regular_customers
 
+    async def get_room_category_popularity(self) -> List[Dict[str, Any]]:
+        """Get popularity statistics for room categories (types)."""
+        # Count bookings by room type
+        result = await self.db.execute(
+            select(
+                Room.room_type,
+                func.count(Booking.id).label('booking_count'),
+                func.sum(Booking.total_price).label('total_revenue'),
+                func.count(func.distinct(Booking.user_id)).label('unique_customers')
+            )
+            .join(Booking, Room.id == Booking.room_id)
+            .where(Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED]))
+            .group_by(Room.room_type)
+            .order_by(func.count(Booking.id).desc())
+        )
+
+        categories = result.all()
+
+        # Calculate total bookings for percentage
+        total_bookings = sum(cat.booking_count for cat in categories)
+
+        category_data = []
+        for cat in categories:
+            percentage = (cat.booking_count / total_bookings * 100) if total_bookings > 0 else 0
+            category_data.append({
+                'room_type': cat.room_type,
+                'booking_count': cat.booking_count,
+                'total_revenue': float(cat.total_revenue or 0),
+                'unique_customers': cat.unique_customers or 0,
+                'percentage': round(percentage, 1)
+            })
+
+        return category_data
+
     async def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get summary statistics for dashboard."""
         # Total rooms
@@ -209,14 +244,15 @@ class StatisticsController:
         )
         current_month_revenue = revenue_result.scalar() or 0
 
-        return {
-            'total_rooms': rooms_stats.total_rooms or 0,
-            'available_rooms': rooms_stats.available_rooms or 0,
-            'occupied_rooms': (rooms_stats.total_rooms or 0) - (rooms_stats.available_rooms or 0),
-            'bookings_by_status': bookings_by_status,
-            'total_users': total_users or 0,
-            'current_month_revenue': float(current_month_revenue)
-        }
+        builder = (
+            StatisticsResponseBuilder()
+            .with_room_overview(rooms_stats.total_rooms or 0, rooms_stats.available_rooms or 0)
+            .with_bookings_by_status(bookings_by_status)
+            .with_user_total(total_users or 0)
+            .with_current_revenue(float(current_month_revenue))
+        )
+
+        return builder.build()
 
     async def get_revenue_over_time(
         self,

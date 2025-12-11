@@ -17,7 +17,8 @@ const AdminPanel = () => {
     dashboard: null,
     roomOccupancy: [],
     financial: null,
-    regularCustomers: []
+    regularCustomers: [],
+    roomCategoryPopularity: []
   });
   const [graphData, setGraphData] = useState({
     revenue: [],
@@ -118,17 +119,19 @@ const AdminPanel = () => {
     setLoading(true);
     setError('');
     try {
-      const [dashboard, roomOccupancy, financial, regularCustomers] = await Promise.all([
+      const [dashboard, roomOccupancy, financial, regularCustomers, roomCategoryPopularity] = await Promise.all([
         statisticsService.getDashboardSummary(),
         statisticsService.getRoomOccupancy(),
         statisticsService.getFinancialMetrics(),
-        statisticsService.getRegularCustomers()
+        statisticsService.getRegularCustomers(),
+        statisticsService.getRoomCategoryPopularity()
       ]);
       setStatistics({
         dashboard,
         roomOccupancy,
         financial,
-        regularCustomers
+        regularCustomers,
+        roomCategoryPopularity
       });
     } catch (err) {
       setError('Failed to load statistics');
@@ -918,6 +921,33 @@ const AdminPanel = () => {
                         <td>{customer.booking_count}</td>
                         <td>${customer.total_spent.toFixed(2)}</td>
                         <td>{customer.last_booking_date ? formatDate(customer.last_booking_date) : 'N/A'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Room Category Popularity */}
+              <div className="stats-section">
+                <h3>Room Category Popularity</h3>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Room Type</th>
+                      <th>Total Bookings</th>
+                      <th>Percentage</th>
+                      <th>Total Revenue</th>
+                      <th>Unique Customers</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {statistics.roomCategoryPopularity.map((category) => (
+                      <tr key={category.room_type}>
+                        <td><strong>{category.room_type}</strong></td>
+                        <td>{category.booking_count}</td>
+                        <td>{category.percentage}%</td>
+                        <td>${category.total_revenue.toFixed(2)}</td>
+                        <td>{category.unique_customers}</td>
                       </tr>
                     ))}
                   </tbody>

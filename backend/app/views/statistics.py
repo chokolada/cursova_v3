@@ -43,6 +43,15 @@ async def get_regular_customers(
     return await controller.get_regular_customers()
 
 
+@router.get("/room-category-popularity", response_model=List[Dict[str, Any]], dependencies=[Depends(require_manager)])
+async def get_room_category_popularity(
+    db: AsyncSession = Depends(get_db)
+):
+    """Get room category popularity statistics (manager only)."""
+    controller = StatisticsController(db)
+    return await controller.get_room_category_popularity()
+
+
 @router.get("/graphs/revenue", response_model=List[Dict[str, Any]], dependencies=[Depends(require_manager)])
 async def get_revenue_graph(
     period: Literal["day", "week", "month"] = Query(default="month", description="Time period grouping"),

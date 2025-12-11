@@ -67,3 +67,7 @@ logs
 
 # OS
 Thumbs.db
+# Docs
+*.md
+!**/[Rr][Ee][Aa][Dd][Mm][Ee].md
+.claude

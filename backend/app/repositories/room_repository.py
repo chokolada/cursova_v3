@@ -70,7 +70,8 @@ class RoomRepository(BaseRepository[Room]):
         room_type: str = None,
         min_price: float = None,
         max_price: float = None,
-        capacity: int = None
+        capacity: int = None,
+        amenities: str = None
     ) -> List[Room]:
         """Get rooms with multiple filters."""
         query = select(Room).options(selectinload(Room.available_offers))
@@ -90,6 +91,10 @@ class RoomRepository(BaseRepository[Room]):
 
         if capacity is not None:
             query = query.where(Room.capacity >= capacity)
+
+        if amenities:
+            # Search for amenities in the amenities field (case-insensitive)
+            query = query.where(Room.amenities.ilike(f'%{amenities}%'))
 
         # Apply pagination
         query = query.offset(skip).limit(limit)

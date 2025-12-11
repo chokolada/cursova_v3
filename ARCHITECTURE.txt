@@ -1,0 +1,20 @@
+Design Patterns (GoF/GRASP/SOLID)
+=================================
+
+Factory Method
+- File: backend/app/repositories/factory.py
+- Wiring: backend/app/dependencies/repositories.py
+- Purpose: centralizes creation of repositories bound to the current AsyncSession so dependency injection stays thin and we can swap repository implementations from a single factory.
+
+Strategy
+- File: backend/app/services/pricing_strategies.py
+- Usage: backend/app/controllers/booking_controller.py
+- Purpose: booking price calculation can switch strategies (standard vs long-stay discount) without changing controller flow; PricingContext picks the strategy based on stay length.
+
+Builder
+- File: backend/app/services/statistics_builder.py
+- Usage: backend/app/controllers/statistics_controller.py#get_dashboard_summary
+- Purpose: compose dashboard response step by step, making it easy to extend with more metrics while keeping construction readable.
+
+Other Architectural Notes
+- Layers already present: controllers (use-case orchestration), repositories (data access), dependencies (DI), FastAPI views (routing). This aligns with SRP and promotes substitution/extension (Open/Closed) when adding new data sources or pricing rules.
