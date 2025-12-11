@@ -45,6 +45,18 @@
   background-color: #34495e;
 }
 
+.navbar-link-dashboard {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 5px;
+  margin: 0 5px;
+  font-weight: 600;
+}
+
+.navbar-link-dashboard:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+  transform: translateY(-1px);
+}
+
 .navbar-user {
   color: #ecf0f1;
   font-size: 14px;

@@ -27,11 +27,18 @@ const Navbar = () => {
           </li>
 
           {isAuthenticated() && (
-            <li className="navbar-item">
-              <Link to="/my-bookings" className="navbar-link">
-                My Bookings
-              </Link>
-            </li>
+            <>
+              <li className="navbar-item">
+                <Link to="/my-bookings" className="navbar-link">
+                  My Bookings
+                </Link>
+              </li>
+              <li className="navbar-item">
+                <Link to="/dashboard" className="navbar-link navbar-link-dashboard">
+                  My Dashboard
+                </Link>
+              </li>
+            </>
           )}
 
           {isManager() && (
