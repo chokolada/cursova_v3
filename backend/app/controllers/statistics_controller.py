@@ -283,15 +283,64 @@ class StatisticsController:
                 .order_by(func.strftime('%Y-%m', Booking.created_at))
             )
 
-        data = []
+        # Collect data from query
+        data_dict = {}
         for row in result.all():
-            data.append({
+            data_dict[str(row.period)] = {
                 'period': str(row.period),
                 'revenue': float(row.revenue or 0),
                 'booking_count': row.booking_count or 0
-            })
+            }
 
-        return data
+        # Fill in missing periods with zero values for better visualization
+        filled_data = []
+        current_date = start_date
+        end_date = datetime.utcnow()
+
+        if period == "day":
+            while current_date <= end_date:
+                period_str = current_date.strftime('%Y-%m-%d')
+                if period_str in data_dict:
+                    filled_data.append(data_dict[period_str])
+                else:
+                    filled_data.append({
+                        'period': period_str,
+                        'revenue': 0,
+                        'booking_count': 0
+                    })
+                current_date += timedelta(days=1)
+        elif period == "week":
+            while current_date <= end_date:
+                period_str = current_date.strftime('%Y-W%W')
+                if period_str in data_dict:
+                    filled_data.append(data_dict[period_str])
+                    # Move to next week
+                    current_date += timedelta(weeks=1)
+                else:
+                    filled_data.append({
+                        'period': period_str,
+                        'revenue': 0,
+                        'booking_count': 0
+                    })
+                    current_date += timedelta(weeks=1)
+        else:  # month
+            while current_date <= end_date:
+                period_str = current_date.strftime('%Y-%m')
+                if period_str in data_dict:
+                    filled_data.append(data_dict[period_str])
+                else:
+                    filled_data.append({
+                        'period': period_str,
+                        'revenue': 0,
+                        'booking_count': 0
+                    })
+                # Move to first day of next month
+                if current_date.month == 12:
+                    current_date = current_date.replace(year=current_date.year + 1, month=1, day=1)
+                else:
+                    current_date = current_date.replace(month=current_date.month + 1, day=1)
+
+        return filled_data
 
     async def get_occupancy_over_time(
         self,
@@ -364,19 +413,72 @@ class StatisticsController:
                 .order_by(func.strftime('%Y-%m', Booking.check_in_date))
             )
 
-        data = []
+        # Collect data from query
+        data_dict = {}
         for row in result.all():
             occupied = row.occupied_rooms or 0
             occupancy_rate = (occupied / total_rooms * 100) if total_rooms > 0 else 0
-            data.append({
+            data_dict[str(row.period)] = {
                 'period': str(row.period),
                 'occupied_rooms': occupied,
                 'total_rooms': total_rooms,
                 'occupancy_rate': round(occupancy_rate, 2),
                 'booking_count': row.booking_count or 0
-            })
+            }
 
-        return data
+        # Fill in missing periods with zero values for better visualization
+        filled_data = []
+        current_date = start_date
+        end_date = datetime.utcnow()
+
+        if period == "day":
+            while current_date <= end_date:
+                period_str = current_date.strftime('%Y-%m-%d')
+                if period_str in data_dict:
+                    filled_data.append(data_dict[period_str])
+                else:
+                    filled_data.append({
+                        'period': period_str,
+                        'occupied_rooms': 0,
+                        'total_rooms': total_rooms,
+                        'occupancy_rate': 0.0,
+                        'booking_count': 0
+                    })
+                current_date += timedelta(days=1)
+        elif period == "week":
+            while current_date <= end_date:
+                period_str = current_date.strftime('%Y-W%W')
+                if period_str in data_dict:
+                    filled_data.append(data_dict[period_str])
+                else:
+                    filled_data.append({
+                        'period': period_str,
+                        'occupied_rooms': 0,
+                        'total_rooms': total_rooms,
+                        'occupancy_rate': 0.0,
+                        'booking_count': 0
+                    })
+                current_date += timedelta(weeks=1)
+        else:  # month
+            while current_date <= end_date:
+                period_str = current_date.strftime('%Y-%m')
+                if period_str in data_dict:
+                    filled_data.append(data_dict[period_str])
+                else:
+                    filled_data.append({
+                        'period': period_str,
+                        'occupied_rooms': 0,
+                        'total_rooms': total_rooms,
+                        'occupancy_rate': 0.0,
+                        'booking_count': 0
+                    })
+                # Move to first day of next month
+                if current_date.month == 12:
+                    current_date = current_date.replace(year=current_date.year + 1, month=1, day=1)
+                else:
+                    current_date = current_date.replace(month=current_date.month + 1, day=1)
+
+        return filled_data
 
     async def get_bookings_by_status_over_time(
         self,
@@ -423,4 +525,56 @@ class StatisticsController:
                 }
             data_by_period[period_str][row.status.value] = row.count
 
-        return list(data_by_period.values())
+        # Fill in missing periods with zero values for better visualization
+        filled_data = []
+        current_date = start_date
+        end_date = datetime.utcnow()
+
+        if period == "day":
+            while current_date <= end_date:
+                period_str = current_date.strftime('%Y-%m-%d')
+                if period_str in data_by_period:
+                    filled_data.append(data_by_period[period_str])
+                else:
+                    filled_data.append({
+                        'period': period_str,
+                        'pending': 0,
+                        'confirmed': 0,
+                        'cancelled': 0,
+                        'completed': 0
+                    })
+                current_date += timedelta(days=1)
+        elif period == "week":
+            while current_date <= end_date:
+                period_str = current_date.strftime('%Y-W%W')
+                if period_str in data_by_period:
+                    filled_data.append(data_by_period[period_str])
+                else:
+                    filled_data.append({
+                        'period': period_str,
+                        'pending': 0,
+                        'confirmed': 0,
+                        'cancelled': 0,
+                        'completed': 0
+                    })
+                current_date += timedelta(weeks=1)
+        else:  # month
+            while current_date <= end_date:
+                period_str = current_date.strftime('%Y-%m')
+                if period_str in data_by_period:
+                    filled_data.append(data_by_period[period_str])
+                else:
+                    filled_data.append({
+                        'period': period_str,
+                        'pending': 0,
+                        'confirmed': 0,
+                        'cancelled': 0,
+                        'completed': 0
+                    })
+                # Move to first day of next month
+                if current_date.month == 12:
+                    current_date = current_date.replace(year=current_date.year + 1, month=1, day=1)
+                else:
+                    current_date = current_date.replace(month=current_date.month + 1, day=1)
+
+        return filled_data
