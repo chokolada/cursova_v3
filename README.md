@@ -169,6 +169,56 @@ npm start
 - `PUT /api/users/{id}` - оновити користувача
 - `DELETE /api/users/{id}` - видалити користувача
 
+### Statistics (Manager only)
+- `GET /api/statistics/dashboard` - загальна статистика
+- `GET /api/statistics/room-occupancy` - завантаженість номерів
+- `GET /api/statistics/financial` - фінансові показники
+- `GET /api/statistics/regular-customers` - постійні клієнти
+- `GET /api/statistics/graphs/revenue` - графік доходів
+- `GET /api/statistics/graphs/occupancy` - графік завантаженості
+- `GET /api/statistics/graphs/bookings-status` - графік бронювань за статусом
+
+### Offers
+- `GET /api/offers` - список спецпропозицій
+- `GET /api/offers/{id}` - деталі пропозиції
+- `POST /api/offers` - створити пропозицію (manager)
+- `PUT /api/offers/{id}` - оновити пропозицію (manager)
+- `DELETE /api/offers/{id}` - видалити пропозицію (manager)
+
+## Тестові Користувачі
+
+При першому запуску системи автоматично створюються тестові користувачі:
+
+### Менеджер (Manager)
+- **Логін:** `manager1`
+- **Email:** `manager1@hotel.com`
+- **Пароль:** `Manager123!`
+- **Права:** Повний доступ до адміністративної панелі
+
+### Звичайні Користувачі (Users)
+
+**Користувач 1:**
+- **Логін:** `john_doe`
+- **Email:** `john@example.com`
+- **Пароль:** `User123!`
+
+**Користувач 2:**
+- **Логін:** `jane_smith`
+- **Email:** `jane@example.com`
+- **Пароль:** `User123!`
+
+**Користувач 3:**
+- **Логін:** `bob_wilson`
+- **Email:** `bob@example.com`
+- **Пароль:** `User123!`
+
+### Запуск Seed Script
+Для створення тестових даних (користувачів, номерів, пропозицій):
+```bash
+cd backend
+poetry run python seed_database_with_offers.py
+```
+
 ## Тестування
 
 ```bash
