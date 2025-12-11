@@ -1,5 +1,6 @@
-from typing import List
-from sqlalchemy import select
+from typing import List, Optional
+from datetime import datetime
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models.booking import Booking, BookingStatus
@@ -11,6 +12,50 @@ class BookingRepository(BaseRepository[Booking]):
 
     def __init__(self, db: AsyncSession):
         super().__init__(Booking, db)
+
+    async def get_overlapping_bookings(
+        self,
+        room_id: int,
+        start_date: datetime,
+        end_date: datetime,
+        exclude_booking_id: Optional[int] = None
+    ) -> List[Booking]:
+        """Return bookings that overlap the given date range."""
+        active_statuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.COMPLETED]
+        query = (
+            select(Booking)
+            .where(
+                Booking.room_id == room_id,
+                Booking.status.in_(active_statuses),
+                Booking.check_in_date < end_date,
+                Booking.check_out_date > start_date,
+            )
+        )
+        if exclude_booking_id:
+            query = query.where(Booking.id != exclude_booking_id)
+
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def get_booked_ranges(
+        self,
+        room_id: int,
+        start_date: datetime,
+        end_date: datetime
+    ) -> List[Booking]:
+        """Return bookings for a room within a date window (for availability display)."""
+        active_statuses = [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.COMPLETED]
+        result = await self.db.execute(
+            select(Booking)
+            .where(
+                Booking.room_id == room_id,
+                Booking.status.in_(active_statuses),
+                Booking.check_in_date < end_date,
+                Booking.check_out_date > start_date,
+            )
+            .order_by(Booking.check_in_date)
+        )
+        return list(result.scalars().all())
 
     async def create(self, booking: Booking) -> Booking:
         """Create a new booking and reload with relationships."""

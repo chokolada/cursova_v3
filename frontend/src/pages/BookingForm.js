@@ -17,6 +17,7 @@ const BookingForm = () => {
     guests_count: 1,
     special_requests: '',
   });
+  const [bookedRanges, setBookedRanges] = useState([]);
   const [selectedOffers, setSelectedOffers] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,16 +35,64 @@ const BookingForm = () => {
     try {
       const data = await roomService.getRoom(roomId);
       setRoom(data);
+      await loadBookedDates();
     } catch (err) {
       setError('Failed to load room details');
       console.error(err);
     }
   };
 
+  const loadBookedDates = async () => {
+    try {
+      const now = new Date();
+      const oneYearLater = new Date();
+      oneYearLater.setFullYear(now.getFullYear() + 1);
+
+      const data = await bookingService.getRoomBookedDates(
+        roomId,
+        now.toISOString(),
+        oneYearLater.toISOString()
+      );
+      setBookedRanges(data || []);
+    } catch (err) {
+      console.error('Failed to load booked dates', err);
+    }
+  };
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === 'check_in_date' || name === 'check_out_date') {
+      if (value && isDateBlocked(new Date(value))) {
+        setError('Selected date is unavailable. Please choose another date.');
+        return;
+      }
+
+      const nextFormData = {
+        ...formData,
+        [name]: value,
+      };
+
+      if (
+        nextFormData.check_in_date &&
+        nextFormData.check_out_date &&
+        isRangeBlocked(
+          new Date(nextFormData.check_in_date),
+          new Date(nextFormData.check_out_date)
+        )
+      ) {
+        setError('Selected date range is unavailable. Please choose different dates.');
+        return;
+      }
+
+      setError('');
+      setFormData(nextFormData);
+      return;
+    }
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
@@ -74,6 +123,22 @@ const BookingForm = () => {
     return roomTotal + offersTotal;
   };
 
+  const isDateBlocked = (date) => {
+    return bookedRanges.some((range) => {
+      const start = new Date(range.check_in_date);
+      const end = new Date(range.check_out_date);
+      return date >= start && date < end; // check-out is exclusive
+    });
+  };
+
+  const isRangeBlocked = (start, end) => {
+    return bookedRanges.some((range) => {
+      const bookedStart = new Date(range.check_in_date);
+      const bookedEnd = new Date(range.check_out_date);
+      return start < bookedEnd && end > bookedStart;
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -90,7 +155,6 @@ const BookingForm = () => {
       };
 
       await bookingService.createBooking(bookingData);
-      alert('Booking created successfully!');
       navigate('/my-bookings');
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to create booking');
@@ -142,6 +206,21 @@ const BookingForm = () => {
               required
             />
           </div>
+
+          {bookedRanges.length > 0 && (
+            <div className="booked-dates-info">
+              <strong>Unavailable dates:</strong>
+              <ul>
+                {bookedRanges.map((range) => (
+                  <li key={`${range.check_in_date}-${range.check_out_date}`}>
+                    {new Date(range.check_in_date).toLocaleDateString()} —{' '}
+                    {new Date(range.check_out_date).toLocaleDateString()}
+                    {' '}({range.status})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="guests_count">Number of Guests</label>

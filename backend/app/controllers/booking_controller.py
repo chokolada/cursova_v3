@@ -66,6 +66,18 @@ class BookingController:
                 detail=f"Room capacity is {room.capacity} guests"
             )
 
+        # Prevent double-booking: check for overlapping bookings on this room
+        overlapping = await self.booking_repo.get_overlapping_bookings(
+            room_id=booking_data.room_id,
+            start_date=booking_data.check_in_date,
+            end_date=booking_data.check_out_date
+        )
+        if overlapping:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Room is already booked for the selected dates"
+            )
+
         # Calculate total price
         days = (booking_data.check_out_date - booking_data.check_in_date).days
         if days <= 0:
@@ -152,6 +164,23 @@ class BookingController:
         # Recalculate price if dates changed
         if "check_in_date" in update_data or "check_out_date" in update_data:
             room = await self.room_repo.get(booking.room_id)
+            # Use updated values if provided, otherwise existing ones
+            new_check_in = update_data.get("check_in_date", booking.check_in_date)
+            new_check_out = update_data.get("check_out_date", booking.check_out_date)
+
+            # Prevent overlaps with other bookings
+            overlapping = await self.booking_repo.get_overlapping_bookings(
+                room_id=booking.room_id,
+                start_date=new_check_in,
+                end_date=new_check_out,
+                exclude_booking_id=booking.id
+            )
+            if overlapping:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Room is already booked for the selected dates"
+                )
+
             days = (booking.check_out_date - booking.check_in_date).days
             booking.total_price = days * room.price_per_night
 
@@ -185,3 +214,16 @@ class BookingController:
                 detail="Booking not found"
             )
         await self.booking_repo.delete(booking)
+
+    async def get_room_booked_date_ranges(
+        self,
+        room_id: int,
+        start_date: datetime,
+        end_date: datetime
+    ):
+        """Return booked date ranges for a room (for availability/date pickers)."""
+        return await self.booking_repo.get_booked_ranges(
+            room_id=room_id,
+            start_date=start_date,
+            end_date=end_date
+        )

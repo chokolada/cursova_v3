@@ -12,7 +12,10 @@
       "Bash(poetry run python:*)",
       "Bash(timeout 3 sleep:*)",
       "Bash(sqlite3:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(timeout 5 poetry run uvicorn:*)",
+      "Bash(npm install:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

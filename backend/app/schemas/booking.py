@@ -5,6 +5,24 @@ from app.models.booking import BookingStatus
 from app.schemas.offer import OfferResponse
 
 
+class BookingUser(BaseModel):
+    """Minimal user info for booking responses."""
+    id: int
+    username: str
+
+    class Config:
+        from_attributes = True
+
+
+class BookingRoom(BaseModel):
+    """Minimal room info for booking responses."""
+    id: int
+    room_number: str
+
+    class Config:
+        from_attributes = True
+
+
 class BookingBase(BaseModel):
     """Base booking schema."""
     room_id: int
@@ -41,6 +59,8 @@ class BookingResponse(BookingBase):
     """Schema for booking response."""
     id: int
     user_id: int
+    user: BookingUser
+    room: BookingRoom
     total_price: float
     status: BookingStatus
     created_at: datetime
@@ -49,3 +69,10 @@ class BookingResponse(BookingBase):
 
     class Config:
         from_attributes = True
+
+
+class BookedDateRange(BaseModel):
+    """Date range a room is booked for (for availability display)."""
+    check_in_date: datetime
+    check_out_date: datetime
+    status: BookingStatus

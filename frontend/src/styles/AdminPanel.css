@@ -275,6 +275,39 @@
   width: 100px;
 }
 
+.days-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quick-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 14px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pill:hover {
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.pill.active {
+  background: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
 .period-selector:focus,
 .days-input:focus {
   outline: none;

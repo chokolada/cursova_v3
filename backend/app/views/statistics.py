@@ -46,7 +46,7 @@ async def get_regular_customers(
 @router.get("/graphs/revenue", response_model=List[Dict[str, Any]], dependencies=[Depends(require_manager)])
 async def get_revenue_graph(
     period: Literal["day", "week", "month"] = Query(default="month", description="Time period grouping"),
-    days: int = Query(default=30, ge=1, le=365, description="Number of days to look back"),
+    days: int = Query(default=180, ge=1, le=365, description="Number of days to look back"),
     db: AsyncSession = Depends(get_db)
 ):
     """Get revenue data over time for graphing (manager only)."""
@@ -57,7 +57,7 @@ async def get_revenue_graph(
 @router.get("/graphs/occupancy", response_model=List[Dict[str, Any]], dependencies=[Depends(require_manager)])
 async def get_occupancy_graph(
     period: Literal["day", "week", "month"] = Query(default="month", description="Time period grouping"),
-    days: int = Query(default=30, ge=1, le=365, description="Number of days to look back"),
+    days: int = Query(default=180, ge=1, le=365, description="Number of days to look back"),
     db: AsyncSession = Depends(get_db)
 ):
     """Get room occupancy data over time for graphing (manager only)."""
@@ -68,7 +68,7 @@ async def get_occupancy_graph(
 @router.get("/graphs/bookings-status", response_model=List[Dict[str, Any]], dependencies=[Depends(require_manager)])
 async def get_bookings_status_graph(
     period: Literal["day", "week", "month"] = Query(default="month", description="Time period grouping"),
-    days: int = Query(default=30, ge=1, le=365, description="Number of days to look back"),
+    days: int = Query(default=180, ge=1, le=365, description="Number of days to look back"),
     db: AsyncSession = Depends(get_db)
 ):
     """Get bookings by status over time for graphing (manager only)."""

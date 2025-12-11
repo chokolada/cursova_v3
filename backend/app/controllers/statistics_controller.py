@@ -316,52 +316,52 @@ class StatisticsController:
             # Group by day
             result = await self.db.execute(
                 select(
-                    func.date(Booking.check_in).label('period'),
+                    func.date(Booking.check_in_date).label('period'),
                     func.count(func.distinct(Booking.room_id)).label('occupied_rooms'),
                     func.count(Booking.id).label('booking_count')
                 )
                 .where(
                     and_(
-                        Booking.check_in >= start_date,
+                        Booking.check_in_date >= start_date,
                         Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
                     )
                 )
-                .group_by(func.date(Booking.check_in))
-                .order_by(func.date(Booking.check_in))
+                .group_by(func.date(Booking.check_in_date))
+                .order_by(func.date(Booking.check_in_date))
             )
         elif period == "week":
             # Group by week
             result = await self.db.execute(
                 select(
-                    func.strftime('%Y-W%W', Booking.check_in).label('period'),
+                    func.strftime('%Y-W%W', Booking.check_in_date).label('period'),
                     func.count(func.distinct(Booking.room_id)).label('occupied_rooms'),
                     func.count(Booking.id).label('booking_count')
                 )
                 .where(
                     and_(
-                        Booking.check_in >= start_date,
+                        Booking.check_in_date >= start_date,
                         Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
                     )
                 )
-                .group_by(func.strftime('%Y-W%W', Booking.check_in))
-                .order_by(func.strftime('%Y-W%W', Booking.check_in))
+                .group_by(func.strftime('%Y-W%W', Booking.check_in_date))
+                .order_by(func.strftime('%Y-W%W', Booking.check_in_date))
             )
         else:  # month
             # Group by month
             result = await self.db.execute(
                 select(
-                    func.strftime('%Y-%m', Booking.check_in).label('period'),
+                    func.strftime('%Y-%m', Booking.check_in_date).label('period'),
                     func.count(func.distinct(Booking.room_id)).label('occupied_rooms'),
                     func.count(Booking.id).label('booking_count')
                 )
                 .where(
                     and_(
-                        Booking.check_in >= start_date,
+                        Booking.check_in_date >= start_date,
                         Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.COMPLETED])
                     )
                 )
-                .group_by(func.strftime('%Y-%m', Booking.check_in))
-                .order_by(func.strftime('%Y-%m', Booking.check_in))
+                .group_by(func.strftime('%Y-%m', Booking.check_in_date))
+                .order_by(func.strftime('%Y-%m', Booking.check_in_date))
             )
 
         data = []

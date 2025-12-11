@@ -34,6 +34,15 @@ const bookingService = {
   async deleteBooking(id) {
     await api.delete(`/bookings/${id}`);
   },
+
+  async getRoomBookedDates(roomId, startDate, endDate) {
+    const params = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+
+    const response = await api.get(`/bookings/room/${roomId}/booked-dates`, { params });
+    return response.data;
+  },
 };
 
 export default bookingService;

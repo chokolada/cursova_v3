@@ -30,7 +30,8 @@ class Room(Base):
     available_offers: Mapped[List["Offer"]] = relationship(
         "Offer",
         secondary="room_offers",
-        back_populates="rooms"
+        back_populates="rooms",
+        lazy="selectin",  # eager-load offers to avoid async lazy-loading during response serialization
     )
 
     def __repr__(self) -> str:

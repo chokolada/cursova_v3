@@ -311,104 +311,17 @@ async def create_bookings():
         alcohol = next((o for o in all_offers if o.name == "Premium Alcohol Package"), None)
 
         now = datetime.utcnow()
+        current_month_start = now.replace(day=1)
+        prev_month_start = (current_month_start - timedelta(days=1)).replace(day=1)  # last month
+        prev2_month_start = (prev_month_start - timedelta(days=1)).replace(day=1)   # two months ago
 
-        bookings_data = [
-            {
-                "user": users[0],
-                "room": rooms[0],
-                "check_in": now - timedelta(days=10),
-                "check_out": now - timedelta(days=7),
-                "guests": 1,
-                "status": BookingStatus.COMPLETED,
-                "special_requests": "Please provide extra towels.",
-                "offers": [breakfast] if breakfast else []
-            },
-            {
-                "user": users[1],
-                "room": rooms[3],
-                "check_in": now - timedelta(days=5),
-                "check_out": now + timedelta(days=2),
-                "guests": 2,
-                "status": BookingStatus.CONFIRMED,
-                "special_requests": "Anniversary celebration - could you arrange flowers in the room?",
-                "offers": [breakfast, dinner] if breakfast and dinner else []
-            },
-            {
-                "user": users[0],
-                "room": rooms[5],
-                "check_in": now + timedelta(days=7),
-                "check_out": now + timedelta(days=10),
-                "guests": 3,
-                "status": BookingStatus.PENDING,
-                "special_requests": "Family with young child. Need a crib if available.",
-                "offers": [breakfast, massage] if breakfast and massage else []
-            },
-            {
-                "user": users[2],
-                "room": rooms[7],
-                "check_in": now + timedelta(days=14),
-                "check_out": now + timedelta(days=17),
-                "guests": 2,
-                "status": BookingStatus.CONFIRMED,
-                "special_requests": "Honeymoon suite. Looking forward to the premium experience!",
-                "offers": [breakfast, dinner, massage, alcohol] if all([breakfast, dinner, massage, alcohol]) else []
-            },
-            {
-                "user": users[1],
-                "room": rooms[2],
-                "check_in": now - timedelta(days=3),
-                "check_out": now + timedelta(days=4),
-                "guests": 2,
-                "status": BookingStatus.CONFIRMED,
-                "special_requests": None,
-                "offers": []
-            },
-            {
-                "user": users[2],
-                "room": rooms[4],
-                "check_in": now + timedelta(days=20),
-                "check_out": now + timedelta(days=23),
-                "guests": 2,
-                "status": BookingStatus.PENDING,
-                "special_requests": "Business trip. Need stable WiFi and quiet room for conference calls.",
-                "offers": [breakfast] if breakfast else []
-            },
-            {
-                "user": users[0],
-                "room": rooms[1],
-                "check_in": now + timedelta(days=5),
-                "check_out": now + timedelta(days=7),
-                "guests": 1,
-                "status": BookingStatus.CANCELLED,
-                "special_requests": "Unfortunately need to cancel due to schedule change.",
-                "offers": []
-            },
-            {
-                "user": users[1],
-                "room": rooms[9],
-                "check_in": now + timedelta(days=30),
-                "check_out": now + timedelta(days=35),
-                "guests": 2,
-                "status": BookingStatus.PENDING,
-                "special_requests": "Special occasion - 10th wedding anniversary. Would love champagne and roses package!",
-                "offers": [breakfast, dinner, massage] if all([breakfast, dinner, massage]) else []
-            }
-        ]
-
-        for booking_data in bookings_data:
-            user = booking_data["user"]
-            room = booking_data["room"]
-            check_in = booking_data["check_in"]
-            check_out = booking_data["check_out"]
-            guests = booking_data["guests"]
-            status = booking_data["status"]
-            special_requests = booking_data["special_requests"]
-            selected_offers = booking_data["offers"]
-
-            # Calculate total price
-            nights = (check_out - check_in).days
-            room_price = room.price_per_night * nights
-            offers_price = sum(offer.price for offer in selected_offers)
+        def add_booking(user, room, start_offset, nights, status, offers=None, special_requests=None, guests=None):
+            check_in = now + timedelta(days=start_offset)
+            check_out = check_in + timedelta(days=nights)
+            selected_offers = offers or []
+            nights_count = (check_out - check_in).days
+            room_price = room.price_per_night * nights_count
+            offers_price = sum(o.price for o in selected_offers)
             total_price = room_price + offers_price
 
             booking = Booking(
@@ -416,7 +329,7 @@ async def create_bookings():
                 room_id=room.id,
                 check_in_date=check_in,
                 check_out_date=check_out,
-                guests_count=guests,
+                guests_count=guests or room.capacity,
                 total_price=total_price,
                 status=status,
                 special_requests=special_requests
@@ -424,8 +337,48 @@ async def create_bookings():
             booking.selected_offers = selected_offers
             session.add(booking)
 
+        # Generate bookings spread over the last 60 days and next 30 days
+        add_booking(users[0], rooms[0], start_offset=-55, nights=3, status=BookingStatus.COMPLETED, offers=[breakfast], special_requests="Early check-in if possible", guests=1)
+        add_booking(users[1], rooms[1], start_offset=-48, nights=4, status=BookingStatus.COMPLETED, offers=[breakfast, dinner], guests=1)
+        add_booking(users[2], rooms[2], start_offset=-42, nights=5, status=BookingStatus.COMPLETED, offers=[breakfast], guests=2)
+        add_booking(users[0], rooms[3], start_offset=-35, nights=3, status=BookingStatus.COMPLETED, offers=[massage], guests=2)
+        add_booking(users[1], rooms[4], start_offset=-30, nights=6, status=BookingStatus.COMPLETED, offers=[breakfast, dinner], guests=2)
+        add_booking(users[2], rooms[5], start_offset=-24, nights=3, status=BookingStatus.COMPLETED, offers=[breakfast], guests=3)
+        add_booking(users[0], rooms[6], start_offset=-18, nights=4, status=BookingStatus.CONFIRMED, offers=[breakfast, dinner, massage], guests=2, special_requests="Birthday trip")
+        add_booking(users[1], rooms[7], start_offset=-15, nights=3, status=BookingStatus.CONFIRMED, offers=[breakfast, alcohol], guests=2, special_requests="Anniversary - flowers on arrival")
+        add_booking(users[2], rooms[8], start_offset=-12, nights=2, status=BookingStatus.CONFIRMED, offers=[breakfast], guests=2)
+        add_booking(users[0], rooms[9], start_offset=-8, nights=5, status=BookingStatus.CONFIRMED, offers=[breakfast, dinner, massage, alcohol], guests=2)
+
+        # Recent/ongoing
+        add_booking(users[1], rooms[0], start_offset=-5, nights=4, status=BookingStatus.CONFIRMED, offers=[breakfast], guests=1)
+        add_booking(users[2], rooms[1], start_offset=-3, nights=3, status=BookingStatus.CONFIRMED, offers=[breakfast], guests=2)
+
+        # Upcoming within next month
+        add_booking(users[0], rooms[2], start_offset=2, nights=3, status=BookingStatus.PENDING, offers=[breakfast], guests=2)
+        add_booking(users[1], rooms[3], start_offset=5, nights=4, status=BookingStatus.PENDING, offers=[breakfast, dinner], guests=2)
+        add_booking(users[2], rooms[4], start_offset=9, nights=3, status=BookingStatus.PENDING, offers=[massage], guests=2)
+        add_booking(users[0], rooms[5], start_offset=12, nights=5, status=BookingStatus.PENDING, offers=[breakfast, dinner], guests=3)
+        add_booking(users[1], rooms[6], start_offset=15, nights=3, status=BookingStatus.CONFIRMED, offers=[breakfast, alcohol], guests=2)
+        add_booking(users[2], rooms[7], start_offset=20, nights=4, status=BookingStatus.PENDING, offers=[breakfast, massage], guests=2)
+        add_booking(users[0], rooms[8], start_offset=24, nights=3, status=BookingStatus.PENDING, offers=[breakfast], guests=2)
+        add_booking(users[1], rooms[9], start_offset=28, nights=4, status=BookingStatus.PENDING, offers=[breakfast, dinner, massage], guests=2)
+
+        # Additional coverage for previous months (October & November)
+        def offset_from_date(target_date):
+            return (target_date - now).days
+
+        # October (two months ago)
+        add_booking(users[0], rooms[2], start_offset=offset_from_date(prev2_month_start + timedelta(days=2)), nights=3, status=BookingStatus.COMPLETED, offers=[breakfast], guests=2)
+        add_booking(users[1], rooms[5], start_offset=offset_from_date(prev2_month_start + timedelta(days=10)), nights=4, status=BookingStatus.COMPLETED, offers=[breakfast, dinner], guests=2)
+        add_booking(users[2], rooms[8], start_offset=offset_from_date(prev2_month_start + timedelta(days=20)), nights=3, status=BookingStatus.COMPLETED, offers=[massage], guests=2)
+
+        # November (previous month)
+        add_booking(users[0], rooms[3], start_offset=offset_from_date(prev_month_start + timedelta(days=3)), nights=3, status=BookingStatus.COMPLETED, offers=[breakfast], guests=2)
+        add_booking(users[1], rooms[6], start_offset=offset_from_date(prev_month_start + timedelta(days=12)), nights=4, status=BookingStatus.CONFIRMED, offers=[breakfast, dinner], guests=2)
+        add_booking(users[2], rooms[9], start_offset=offset_from_date(prev_month_start + timedelta(days=22)), nights=5, status=BookingStatus.CONFIRMED, offers=[breakfast, massage], guests=2)
+
         await session.commit()
-        print(f"[OK] Created {len(bookings_data)} bookings with offer selections")
+        print("[OK] Created seed bookings with dense 2-month history and upcoming stays")
 
 
 async def main():

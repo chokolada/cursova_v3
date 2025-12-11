@@ -1,7 +1,8 @@
 from typing import List
-from fastapi import APIRouter, Depends, status
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, status, Query, HTTPException
 from app.controllers.booking_controller import BookingController
-from app.schemas.booking import BookingCreate, BookingUpdate, BookingResponse
+from app.schemas.booking import BookingCreate, BookingUpdate, BookingResponse, BookedDateRange
 from app.dependencies import (
     get_booking_repository,
     get_room_repository,
@@ -65,6 +66,28 @@ async def create_booking(
     """Create a new booking."""
     controller = BookingController(booking_repo, room_repo, offer_repo)
     return await controller.create_booking(booking_data, current_user.id)
+
+
+@router.get("/room/{room_id}/booked-dates", response_model=List[BookedDateRange])
+async def get_room_booked_dates(
+    room_id: int,
+    start_date: datetime = Query(None, description="Start of window to check availability"),
+    end_date: datetime = Query(None, description="End of window to check availability"),
+    booking_repo: BookingRepository = Depends(get_booking_repository),
+    room_repo: RoomRepository = Depends(get_room_repository)
+):
+    """Return booked date ranges for a room to disable dates in date pickers."""
+    # Default window: from today for the next 12 months
+    now = datetime.utcnow()
+    start = start_date or now
+    end = end_date or (start + timedelta(days=365))
+
+    room = await room_repo.get(room_id)
+    if not room:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Room not found")
+
+    controller = BookingController(booking_repo, room_repo)
+    return await controller.get_room_booked_date_ranges(room_id, start, end)
 
 
 @router.put("/{booking_id}", response_model=BookingResponse)

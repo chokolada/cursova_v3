@@ -4,10 +4,12 @@ import roomService from '../services/roomService';
 import bookingService from '../services/bookingService';
 import offerService from '../services/offerService';
 import statisticsService from '../services/statisticsService';
+import { useAuth } from '../contexts/AuthContext';
 import '../styles/AdminPanel.css';
 
 const AdminPanel = () => {
-  const [activeTab, setActiveTab] = useState('rooms');
+  const { isManager } = useAuth();
+  const [activeTab, setActiveTab] = useState(isManager() ? 'rooms' : 'graphs');
   const [rooms, setRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [offers, setOffers] = useState([]);
@@ -23,7 +25,7 @@ const AdminPanel = () => {
     bookingsStatus: []
   });
   const [graphPeriod, setGraphPeriod] = useState('month');
-  const [graphDays, setGraphDays] = useState(30);
+  const [graphDays, setGraphDays] = useState(180);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -328,41 +330,47 @@ const AdminPanel = () => {
       <h1>Admin Panel</h1>
 
       <div className="admin-tabs">
-        <button
-          className={activeTab === 'rooms' ? 'active' : ''}
-          onClick={() => setActiveTab('rooms')}
-        >
-          Manage Rooms
-        </button>
-        <button
-          className={activeTab === 'offers' ? 'active' : ''}
-          onClick={() => setActiveTab('offers')}
-        >
-          Manage Offers
-        </button>
-        <button
-          className={activeTab === 'statistics' ? 'active' : ''}
-          onClick={() => setActiveTab('statistics')}
-        >
-          Statistics
-        </button>
+        {isManager() && (
+          <>
+            <button
+              className={activeTab === 'rooms' ? 'active' : ''}
+              onClick={() => setActiveTab('rooms')}
+            >
+              Manage Rooms
+            </button>
+            <button
+              className={activeTab === 'offers' ? 'active' : ''}
+              onClick={() => setActiveTab('offers')}
+            >
+              Manage Offers
+            </button>
+            <button
+              className={activeTab === 'statistics' ? 'active' : ''}
+              onClick={() => setActiveTab('statistics')}
+            >
+              Statistics
+            </button>
+          </>
+        )}
         <button
           className={activeTab === 'graphs' ? 'active' : ''}
           onClick={() => setActiveTab('graphs')}
         >
           Statistics (Graph)
         </button>
-        <button
-          className={activeTab === 'bookings' ? 'active' : ''}
-          onClick={() => setActiveTab('bookings')}
-        >
-          View Bookings
-        </button>
+        {isManager() && (
+          <button
+            className={activeTab === 'bookings' ? 'active' : ''}
+            onClick={() => setActiveTab('bookings')}
+          >
+            View Bookings
+          </button>
+        )}
       </div>
 
       {error && <div className="error-message">{error}</div>}
 
-      {activeTab === 'rooms' && (
+      {isManager() && activeTab === 'rooms' && (
         <div className="admin-section">
           <div className="room-form-section">
             <h2>{editingRoom ? 'Edit Room' : 'Create New Room'}</h2>
@@ -525,7 +533,7 @@ const AdminPanel = () => {
         </div>
       )}
 
-      {activeTab === 'offers' && (
+      {isManager() && activeTab === 'offers' && (
         <div className="admin-section">
           <div className="offer-form-section">
             <h2>{editingOffer ? 'Edit Offer' : 'Create New Offer'}</h2>
@@ -659,7 +667,7 @@ const AdminPanel = () => {
         </div>
       )}
 
-      {activeTab === 'statistics' && (
+      {isManager() && activeTab === 'statistics' && (
         <div className="admin-section">
           <h2>Statistics & Analytics</h2>
           {loading ? (
@@ -836,14 +844,28 @@ const AdminPanel = () => {
 
             <div className="control-group">
               <label>Look Back (days):</label>
-              <input
-                type="number"
-                value={graphDays}
-                onChange={(e) => setGraphDays(parseInt(e.target.value))}
-                min="1"
-                max="365"
-                className="days-input"
-              />
+              <div className="days-row">
+                <input
+                  type="number"
+                  value={graphDays}
+                  onChange={(e) => setGraphDays(parseInt(e.target.value))}
+                  min="1"
+                  max="365"
+                  className="days-input"
+                />
+                <div className="quick-pills">
+                  {[7, 30, 60, 90, 180, 365].map((days) => (
+                    <button
+                      key={days}
+                      type="button"
+                      className={`pill ${graphDays === days ? 'active' : ''}`}
+                      onClick={() => setGraphDays(days)}
+                    >
+                      {days === 7 ? '1w' : days === 30 ? '1m' : `${Math.round(days / 30)}m`}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -922,36 +944,40 @@ const AdminPanel = () => {
         </div>
       )}
 
-      {activeTab === 'bookings' && (
+      {isManager() && activeTab === 'bookings' && (
         <div className="admin-section">
           <h2>All Bookings</h2>
           {loading ? (
             <div>Loading...</div>
           ) : (
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>User ID</th>
-                  <th>Room ID</th>
-                  <th>Check-in</th>
-                  <th>Check-out</th>
-                  <th>Guests</th>
-                  <th>Total Price</th>
-                  <th>Status</th>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Room</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Guests</th>
+                    <th>Total Price</th>
+                    <th>Status</th>
                 </tr>
               </thead>
-              <tbody>
-                {bookings.map((booking) => (
-                  <tr key={booking.id}>
-                    <td>{booking.id}</td>
-                    <td>{booking.user_id}</td>
-                    <td>{booking.room_id}</td>
-                    <td>{formatDate(booking.check_in_date)}</td>
-                    <td>{formatDate(booking.check_out_date)}</td>
-                    <td>{booking.guests_count}</td>
-                    <td>${booking.total_price}</td>
-                    <td>
+                <tbody>
+                  {bookings.map((booking) => (
+                    <tr key={booking.id}>
+                      <td>{booking.id}</td>
+                      <td>
+                        {booking.user?.username || 'Unknown'} (ID: {booking.user_id})
+                      </td>
+                      <td>
+                        {booking.room?.room_number || 'Unknown'} (ID: {booking.room_id})
+                      </td>
+                      <td>{formatDate(booking.check_in_date)}</td>
+                      <td>{formatDate(booking.check_out_date)}</td>
+                      <td>{booking.guests_count}</td>
+                      <td>${booking.total_price}</td>
+                      <td>
                       <span className={`status-badge status-${booking.status}`}>
                         {booking.status}
                       </span>
