@@ -75,7 +75,9 @@ const UserDashboard = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString();
+    // Format as YYYY-MM-DD
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
   };
 
   return (

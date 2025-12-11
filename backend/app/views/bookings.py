@@ -128,6 +128,28 @@ async def extend_booking(
     return await controller.extend_booking(booking_id, extend_data.days, current_user)
 
 
+@router.post("/{booking_id}/confirm", response_model=BookingResponse, dependencies=[Depends(require_manager)])
+async def confirm_booking(
+    booking_id: int,
+    booking_repo: BookingRepository = Depends(get_booking_repository),
+    room_repo: RoomRepository = Depends(get_room_repository)
+):
+    """Confirm a pending booking (manager only)."""
+    controller = BookingController(booking_repo, room_repo)
+    return await controller.confirm_booking(booking_id)
+
+
+@router.post("/{booking_id}/decline", response_model=BookingResponse, dependencies=[Depends(require_manager)])
+async def decline_booking(
+    booking_id: int,
+    booking_repo: BookingRepository = Depends(get_booking_repository),
+    room_repo: RoomRepository = Depends(get_room_repository)
+):
+    """Decline a pending booking (manager only) - sets status to cancelled."""
+    controller = BookingController(booking_repo, room_repo)
+    return await controller.decline_booking(booking_id)
+
+
 @router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_manager)])
 async def delete_booking(
     booking_id: int,

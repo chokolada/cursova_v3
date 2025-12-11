@@ -36,6 +36,16 @@ const bookingService = {
     return response.data;
   },
 
+  async confirmBooking(id) {
+    const response = await api.post(`/bookings/${id}/confirm`);
+    return response.data;
+  },
+
+  async declineBooking(id) {
+    const response = await api.post(`/bookings/${id}/decline`);
+    return response.data;
+  },
+
   async deleteBooking(id) {
     await api.delete(`/bookings/${id}`);
   },

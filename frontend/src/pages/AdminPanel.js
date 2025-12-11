@@ -322,7 +322,37 @@ const AdminPanel = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString();
+    // Format as YYYY-MM-DD
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
+  const handleConfirmBooking = async (bookingId) => {
+    if (!window.confirm('Confirm this booking?')) {
+      return;
+    }
+
+    try {
+      await bookingService.confirmBooking(bookingId);
+      alert('Booking confirmed successfully');
+      loadBookings();
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to confirm booking');
+    }
+  };
+
+  const handleDeclineBooking = async (bookingId) => {
+    if (!window.confirm('Decline this booking? This will cancel it.')) {
+      return;
+    }
+
+    try {
+      await bookingService.declineBooking(bookingId);
+      alert('Booking declined successfully');
+      loadBookings();
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Failed to decline booking');
+    }
   };
 
   return (
@@ -1000,6 +1030,7 @@ const AdminPanel = () => {
                     <th>Guests</th>
                     <th>Total Price</th>
                     <th>Status</th>
+                    <th>Actions</th>
                 </tr>
               </thead>
                 <tbody>
@@ -1017,12 +1048,30 @@ const AdminPanel = () => {
                       <td>{booking.guests_count}</td>
                       <td>${booking.total_price}</td>
                       <td>
-                      <span className={`status-badge status-${booking.status}`}>
-                        {booking.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                        <span className={`status-badge status-${booking.status}`}>
+                          {booking.status}
+                        </span>
+                      </td>
+                      <td>
+                        {booking.status === 'pending' && (
+                          <div className="action-buttons">
+                            <button
+                              onClick={() => handleConfirmBooking(booking.id)}
+                              className="btn-success"
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => handleDeclineBooking(booking.id)}
+                              className="btn-danger"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           )}

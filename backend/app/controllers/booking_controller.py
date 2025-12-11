@@ -205,6 +205,44 @@ class BookingController:
         booking.status = BookingStatus.CANCELLED
         return await self.booking_repo.update(booking)
 
+    async def confirm_booking(self, booking_id: int) -> Booking:
+        """Confirm a booking (manager only)."""
+        booking = await self.booking_repo.get(booking_id)
+        if not booking:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Booking not found"
+            )
+
+        # Can only confirm pending bookings
+        if booking.status != BookingStatus.PENDING:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Can only confirm pending bookings. Current status: {booking.status.value}"
+            )
+
+        booking.status = BookingStatus.CONFIRMED
+        return await self.booking_repo.update(booking)
+
+    async def decline_booking(self, booking_id: int) -> Booking:
+        """Decline a booking (manager only) - sets status to cancelled."""
+        booking = await self.booking_repo.get(booking_id)
+        if not booking:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Booking not found"
+            )
+
+        # Can only decline pending bookings
+        if booking.status != BookingStatus.PENDING:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Can only decline pending bookings. Current status: {booking.status.value}"
+            )
+
+        booking.status = BookingStatus.CANCELLED
+        return await self.booking_repo.update(booking)
+
     async def extend_booking(self, booking_id: int, days: int, current_user: User) -> Booking:
         """Extend a booking by adding days to check-out date."""
         from datetime import timedelta
