@@ -1,4 +1,4 @@
-from sqlalchemy import String, Enum as SQLEnum
+from sqlalchemy import String, Integer, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List
 import enum
@@ -28,6 +28,7 @@ class User(Base):
         nullable=False
     )
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    bonus_points: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Relationships
     bookings: Mapped[List["Booking"]] = relationship(

@@ -15,7 +15,10 @@
       "Bash(curl:*)",
       "Bash(timeout 5 poetry run uvicorn:*)",
       "Bash(npm install:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(python:*)",
+      "Bash(timeout 3 poetry run uvicorn:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []
