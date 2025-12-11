@@ -360,3 +360,126 @@
     padding: 15px;
   }
 }
+
+/* Room Occupancy Styles */
+.occupancy-container {
+  margin-top: 20px;
+}
+
+.occupancy-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.summary-number {
+  font-size: 42px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.occupancy-table {
+  margin-top: 20px;
+}
+
+.occupancy-table td {
+  vertical-align: top;
+  padding: 15px !important;
+}
+
+.status-occupied {
+  background-color: #e74c3c !important;
+  color: white !important;
+}
+
+.status-available {
+  background-color: #50C878 !important;
+  color: white !important;
+}
+
+.booking-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.booking-dates {
+  color: #666;
+  font-size: 14px;
+}
+
+.upcoming-bookings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upcoming-booking-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border-left: 3px solid #667eea;
+}
+
+.booking-user {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.no-booking {
+  color: #999;
+  font-style: italic;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-success {
+  background-color: #50C878;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-success:hover {
+  background-color: #45b369;
+}
+
+.btn-danger {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-danger:hover {
+  background-color: #c0392b;
+}

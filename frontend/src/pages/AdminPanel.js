@@ -28,6 +28,7 @@ const AdminPanel = () => {
   const [graphDays, setGraphDays] = useState(180);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [roomOccupancyData, setRoomOccupancyData] = useState([]);
 
   const [roomForm, setRoomForm] = useState({
     room_number: '',
@@ -63,6 +64,8 @@ const AdminPanel = () => {
       loadStatistics();
     } else if (activeTab === 'graphs') {
       loadGraphs();
+    } else if (activeTab === 'occupancy') {
+      loadRoomOccupancy();
     }
   }, [activeTab]);
 
@@ -150,6 +153,61 @@ const AdminPanel = () => {
       });
     } catch (err) {
       setError('Failed to load graph data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadRoomOccupancy = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [roomsData, bookingsData] = await Promise.all([
+        roomService.getAllRooms(),
+        bookingService.getAllBookings()
+      ]);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Process room occupancy data
+      const occupancyData = roomsData.map(room => {
+        // Filter bookings for this room that are confirmed or pending (not cancelled)
+        const roomBookings = bookingsData.filter(
+          booking => booking.room_id === room.id &&
+          booking.status !== 'cancelled'
+        );
+
+        // Find current booking (today is between check-in and check-out)
+        const currentBooking = roomBookings.find(booking => {
+          const checkIn = new Date(booking.check_in_date);
+          const checkOut = new Date(booking.check_out_date);
+          checkIn.setHours(0, 0, 0, 0);
+          checkOut.setHours(0, 0, 0, 0);
+          return checkIn <= today && checkOut > today;
+        });
+
+        // Find upcoming bookings (check-in date is in the future)
+        const upcomingBookings = roomBookings
+          .filter(booking => {
+            const checkIn = new Date(booking.check_in_date);
+            checkIn.setHours(0, 0, 0, 0);
+            return checkIn > today;
+          })
+          .sort((a, b) => new Date(a.check_in_date) - new Date(b.check_in_date))
+          .slice(0, 5); // Show next 5 bookings
+
+        return {
+          room,
+          isOccupied: !!currentBooking,
+          currentBooking,
+          upcomingBookings
+        };
+      });
+
+      setRoomOccupancyData(occupancyData);
+    } catch (err) {
+      setError('Failed to load room occupancy data');
     } finally {
       setLoading(false);
     }
@@ -373,6 +431,12 @@ const AdminPanel = () => {
               onClick={() => setActiveTab('offers')}
             >
               Manage Offers
+            </button>
+            <button
+              className={activeTab === 'occupancy' ? 'active' : ''}
+              onClick={() => setActiveTab('occupancy')}
+            >
+              Room Occupancy
             </button>
             <button
               className={activeTab === 'statistics' ? 'active' : ''}
@@ -1074,6 +1138,103 @@ const AdminPanel = () => {
                   ))}
               </tbody>
             </table>
+          )}
+        </div>
+      )}
+
+      {isManager() && activeTab === 'occupancy' && (
+        <div className="admin-section">
+          <h2>Room Occupancy</h2>
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <div className="occupancy-container">
+              <div className="occupancy-summary">
+                <div className="summary-card">
+                  <h3>Currently Occupied</h3>
+                  <div className="summary-number">
+                    {roomOccupancyData.filter(r => r.isOccupied).length}
+                  </div>
+                </div>
+                <div className="summary-card">
+                  <h3>Available Now</h3>
+                  <div className="summary-number">
+                    {roomOccupancyData.filter(r => !r.isOccupied).length}
+                  </div>
+                </div>
+                <div className="summary-card">
+                  <h3>Total Rooms</h3>
+                  <div className="summary-number">
+                    {roomOccupancyData.length}
+                  </div>
+                </div>
+              </div>
+
+              <table className="admin-table occupancy-table">
+                <thead>
+                  <tr>
+                    <th>Room</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Current Booking</th>
+                    <th>Upcoming Bookings</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roomOccupancyData.map(({ room, isOccupied, currentBooking, upcomingBookings }) => (
+                    <tr key={room.id}>
+                      <td>
+                        <strong>{room.room_number}</strong>
+                      </td>
+                      <td>{room.room_type}</td>
+                      <td>
+                        <span className={`status-badge ${isOccupied ? 'status-occupied' : 'status-available'}`}>
+                          {isOccupied ? 'Occupied' : 'Available'}
+                        </span>
+                      </td>
+                      <td>
+                        {currentBooking ? (
+                          <div className="booking-info">
+                            <div>
+                              <strong>{currentBooking.user?.username || 'Unknown'}</strong>
+                            </div>
+                            <div className="booking-dates">
+                              {formatDate(currentBooking.check_in_date)} → {formatDate(currentBooking.check_out_date)}
+                            </div>
+                            <span className={`status-badge status-${currentBooking.status}`}>
+                              {currentBooking.status}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="no-booking">—</span>
+                        )}
+                      </td>
+                      <td>
+                        {upcomingBookings.length > 0 ? (
+                          <div className="upcoming-bookings">
+                            {upcomingBookings.map(booking => (
+                              <div key={booking.id} className="upcoming-booking-item">
+                                <span className="booking-dates">
+                                  {formatDate(booking.check_in_date)} → {formatDate(booking.check_out_date)}
+                                </span>
+                                <span className="booking-user">
+                                  {booking.user?.username || 'Unknown'}
+                                </span>
+                                <span className={`status-badge status-${booking.status}`}>
+                                  {booking.status}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="no-booking">No upcoming bookings</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
