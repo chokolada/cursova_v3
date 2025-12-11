@@ -875,26 +875,33 @@ const AdminPanel = () => {
             <>
               <div className="graph-section">
                 <h3>Revenue Over Time</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={graphData.revenue}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" />
-                    <YAxis />
-                    <Tooltip />
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart
+                    data={graphData.revenue}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis
+                      dataKey="period"
+                      stroke="#666"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <YAxis
+                      stroke="#666"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
+                    />
                     <Legend />
                     <Line
                       type="monotone"
                       dataKey="revenue"
-                      stroke="#8884d8"
+                      stroke="#4A90E2"
                       name="Revenue ($)"
-                      strokeWidth={2}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="booking_count"
-                      stroke="#82ca9d"
-                      name="Bookings"
-                      strokeWidth={2}
+                      strokeWidth={3}
+                      dot={{ fill: '#4A90E2', r: 5 }}
+                      activeDot={{ r: 7 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -902,40 +909,72 @@ const AdminPanel = () => {
 
               <div className="graph-section">
                 <h3>Room Occupancy Over Time</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={graphData.occupancy}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" />
-                    <YAxis />
-                    <Tooltip />
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart
+                    data={graphData.occupancy}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis
+                      dataKey="period"
+                      stroke="#666"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <YAxis
+                      stroke="#666"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
+                    />
                     <Legend />
-                    <Bar
-                      dataKey="occupied_rooms"
-                      fill="#8884d8"
-                      name="Occupied Rooms"
-                    />
-                    <Bar
+                    <Line
+                      type="monotone"
                       dataKey="occupancy_rate"
-                      fill="#82ca9d"
+                      stroke="#50C878"
                       name="Occupancy Rate (%)"
+                      strokeWidth={3}
+                      dot={{ fill: '#50C878', r: 5 }}
+                      activeDot={{ r: 7 }}
                     />
-                  </BarChart>
+                    <Line
+                      type="monotone"
+                      dataKey="occupied_rooms"
+                      stroke="#FF6B6B"
+                      name="Occupied Rooms"
+                      strokeWidth={3}
+                      dot={{ fill: '#FF6B6B', r: 5 }}
+                      activeDot={{ r: 7 }}
+                    />
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
 
               <div className="graph-section">
                 <h3>Bookings by Status Over Time</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={graphData.bookingsStatus}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="period" />
-                    <YAxis />
-                    <Tooltip />
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart
+                    data={graphData.bookingsStatus}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis
+                      dataKey="period"
+                      stroke="#666"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <YAxis
+                      stroke="#666"
+                      style={{ fontSize: '12px' }}
+                    />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#fff', border: '1px solid #ccc' }}
+                    />
                     <Legend />
-                    <Bar dataKey="pending" stackId="a" fill="#ffc658" name="Pending" />
-                    <Bar dataKey="confirmed" stackId="a" fill="#82ca9d" name="Confirmed" />
-                    <Bar dataKey="completed" stackId="a" fill="#8884d8" name="Completed" />
-                    <Bar dataKey="cancelled" stackId="a" fill="#ff8042" name="Cancelled" />
+                    <Bar dataKey="confirmed" stackId="a" fill="#50C878" name="Confirmed" />
+                    <Bar dataKey="completed" stackId="a" fill="#4A90E2" name="Completed" />
+                    <Bar dataKey="pending" stackId="a" fill="#FFA500" name="Pending" />
+                    <Bar dataKey="cancelled" stackId="a" fill="#FF6B6B" name="Cancelled" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
