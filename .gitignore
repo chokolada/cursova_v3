@@ -71,3 +71,10 @@ Thumbs.db
 *.md
 !**/[Rr][Ee][Aa][Dd][Mm][Ee].md
 .claude
+.claude/
+
+# Project meta (keep out of repo)
+ARCHITECTURE.txt
+PERSONAL_DASHBOARD_SUMMARY.md
+SETUP.md
+ПРОЕКТ.md
