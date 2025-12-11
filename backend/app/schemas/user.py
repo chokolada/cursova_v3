@@ -31,6 +31,7 @@ class UserResponse(UserBase):
     id: int
     role: UserRole
     is_active: bool
+    bonus_points: int
 
     class Config:
         from_attributes = True

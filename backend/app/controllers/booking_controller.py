@@ -205,6 +205,69 @@ class BookingController:
         booking.status = BookingStatus.CANCELLED
         return await self.booking_repo.update(booking)
 
+    async def extend_booking(self, booking_id: int, days: int, current_user: User) -> Booking:
+        """Extend a booking by adding days to check-out date."""
+        from datetime import timedelta
+
+        booking = await self.booking_repo.get(booking_id)
+        if not booking:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Booking not found"
+            )
+
+        # Users can only extend their own bookings
+        if current_user.role == UserRole.USER and booking.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to extend this booking"
+            )
+
+        # Can only extend pending or confirmed bookings
+        if booking.status not in [BookingStatus.PENDING, BookingStatus.CONFIRMED]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Can only extend pending or confirmed bookings"
+            )
+
+        # Validate days
+        if days <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Days must be a positive number"
+            )
+
+        # Calculate new check-out date
+        new_check_out = booking.check_out_date + timedelta(days=days)
+
+        # Check for overlapping bookings with extended dates
+        overlapping = await self.booking_repo.get_overlapping_bookings(
+            room_id=booking.room_id,
+            start_date=booking.check_in_date,
+            end_date=new_check_out,
+            exclude_booking_id=booking.id
+        )
+        if overlapping:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot extend: room is already booked for the extended dates"
+            )
+
+        # Update check-out date
+        booking.check_out_date = new_check_out
+
+        # Recalculate total price
+        room = await self.room_repo.get(booking.room_id)
+        duration = (booking.check_out_date - booking.check_in_date).days
+        booking.total_price = room.price_per_night * duration
+
+        # Add offer prices if any
+        if booking.selected_offers:
+            for offer in booking.selected_offers:
+                booking.total_price += offer.price
+
+        return await self.booking_repo.update(booking)
+
     async def delete_booking(self, booking_id: int) -> None:
         """Delete booking (manager only)."""
         booking = await self.booking_repo.get(booking_id)

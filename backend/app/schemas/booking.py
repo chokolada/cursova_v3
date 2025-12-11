@@ -55,6 +55,11 @@ class BookingUpdate(BaseModel):
     offer_ids: Optional[List[int]] = None
 
 
+class BookingExtend(BaseModel):
+    """Schema for extending a booking."""
+    days: int = Field(..., gt=0, description="Number of days to extend the booking")
+
+
 class BookingResponse(BookingBase):
     """Schema for booking response."""
     id: int

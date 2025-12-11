@@ -1,11 +1,11 @@
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserLogin
 from app.schemas.room import RoomCreate, RoomUpdate, RoomResponse
-from app.schemas.booking import BookingCreate, BookingUpdate, BookingResponse, BookingUser, BookingRoom
+from app.schemas.booking import BookingCreate, BookingUpdate, BookingResponse, BookingUser, BookingRoom, BookingExtend
 from app.schemas.auth import Token, TokenData
 
 __all__ = [
     "UserCreate", "UserUpdate", "UserResponse", "UserLogin",
     "RoomCreate", "RoomUpdate", "RoomResponse",
-    "BookingCreate", "BookingUpdate", "BookingResponse", "BookingUser", "BookingRoom",
+    "BookingCreate", "BookingUpdate", "BookingResponse", "BookingUser", "BookingRoom", "BookingExtend",
     "Token", "TokenData"
 ]
